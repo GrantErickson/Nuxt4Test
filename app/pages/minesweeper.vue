@@ -65,7 +65,7 @@
         <v-btn
           :color="flagMode ? 'orange-darken-2' : 'grey'"
           :variant="flagMode ? 'flat' : 'outlined'"
-          @click="flagMode = !flagMode"
+          @click="toggleFlagMode"
         >
           🔥 Campfire Mode {{ flagMode ? "ON" : "OFF" }}
         </v-btn>
@@ -108,528 +108,96 @@
 </template>
 
 <script setup lang="ts">
-interface Cell {
-  isMine: boolean;
-  isRevealed: boolean;
-  isFlagged: boolean;
-  adjacentMines: number;
-}
+import { MinesweeperGame } from "~/classes/minesweeper";
 
-const boardSize = 15;
-const mineCount = 35;
+// Initialize game instance
+const gameInstance = new MinesweeperGame();
 
-// Helper to safely get a cell
-function getCell(row: number, col: number): Cell | undefined {
-  return board.value[row]?.[col];
-}
+// Reactive state synced with game instance
+const gameOver = ref(gameInstance.gameOver);
+const won = ref(gameInstance.won);
+const flagMode = ref(gameInstance.flagMode);
+const timer = ref(gameInstance.timer);
 
-const board = ref<Cell[][]>([]);
-const gameOver = ref(false);
-const won = ref(false);
-const flagMode = ref(false);
-const timer = ref(0);
-const gameStarted = ref(false);
+// Constants from game
+const boardSize = gameInstance.boardSize;
+const mineCount = gameInstance.mineCount;
 
-let timerInterval: ReturnType<typeof setInterval> | null = null;
+// Computed values
+const flagCount = computed(() => gameInstance.flagCount);
 
-const flagCount = computed(() => {
-  let count = 0;
-  for (const row of board.value) {
-    for (const cell of row) {
-      if (cell.isFlagged) count++;
-    }
-  }
-  return count;
+// Set timer callback for reactivity
+gameInstance.setTimerCallback(() => {
+  timer.value = gameInstance.timer;
 });
 
-const revealedCount = computed(() => {
-  let count = 0;
-  for (const row of board.value) {
-    for (const cell of row) {
-      if (cell.isRevealed) count++;
-    }
-  }
-  return count;
-});
+// Trigger to force template re-render
+const boardVersion = ref(0);
 
-function createBoard(): Cell[][] {
-  const newBoard: Cell[][] = [];
-
-  // Initialize empty board
-  for (let row = 0; row < boardSize; row++) {
-    newBoard[row] = [];
-    for (let col = 0; col < boardSize; col++) {
-      newBoard[row]![col] = {
-        isMine: false,
-        isRevealed: false,
-        isFlagged: false,
-        adjacentMines: 0,
-      };
-    }
-  }
-
-  // Place mines randomly
-  let minesPlaced = 0;
-  while (minesPlaced < mineCount) {
-    const row = Math.floor(Math.random() * boardSize);
-    const col = Math.floor(Math.random() * boardSize);
-    const cell = newBoard[row]?.[col];
-    if (cell && !cell.isMine) {
-      cell.isMine = true;
-      minesPlaced++;
-    }
-  }
-
-  // Calculate adjacent mines for each cell
-  for (let row = 0; row < boardSize; row++) {
-    for (let col = 0; col < boardSize; col++) {
-      const cell = newBoard[row]?.[col];
-      if (cell && !cell.isMine) {
-        cell.adjacentMines = countAdjacentMines(newBoard, row, col);
-      }
-    }
-  }
-
-  return newBoard;
-}
-
-function countAdjacentMines(b: Cell[][], row: number, col: number): number {
-  let count = 0;
-  for (let dr = -1; dr <= 1; dr++) {
-    for (let dc = -1; dc <= 1; dc++) {
-      if (dr === 0 && dc === 0) continue;
-      const newRow = row + dr;
-      const newCol = col + dc;
-      if (
-        newRow >= 0 &&
-        newRow < boardSize &&
-        newCol >= 0 &&
-        newCol < boardSize
-      ) {
-        const neighbor = b[newRow]?.[newCol];
-        if (neighbor?.isMine) count++;
-      }
-    }
-  }
-  return count;
+// Sync state from game instance
+function syncState(): void {
+  const state = gameInstance.getState();
+  gameOver.value = state.gameOver;
+  won.value = state.won;
+  flagMode.value = state.flagMode;
+  timer.value = state.timer;
+  // Force reactivity update by incrementing version
+  boardVersion.value++;
 }
 
 function revealCell(row: number, col: number): void {
-  if (gameOver.value) return;
-
-  const cell = getCell(row, col);
-  if (!cell) return;
-
-  // If flag mode is on, toggle flag instead
-  if (flagMode.value) {
-    toggleFlag(row, col);
-    return;
-  }
-
-  // Chording: if clicking on revealed number with matching adjacent flags, reveal rest
-  if (cell.isRevealed && cell.adjacentMines > 0) {
-    const adjacentFlags = countAdjacentFlags(row, col);
-    const adjacentUnrevealed = countAdjacentUnrevealed(row, col);
-
-    // Auto-flag: if unrevealed count equals the number, flag them all
-    if (adjacentUnrevealed === cell.adjacentMines) {
-      autoFlagAdjacent(row, col);
-      return;
-    }
-
-    // Chord reveal: if flag count matches the number, reveal unflagged neighbors
-    if (adjacentFlags === cell.adjacentMines) {
-      chordReveal(row, col);
-    }
-    return;
-  }
-
-  if (cell.isRevealed || cell.isFlagged) return;
-
-  // Start timer on first click
-  if (!gameStarted.value) {
-    gameStarted.value = true;
-    startTimer();
-  }
-
-  cell.isRevealed = true;
-
-  if (cell.isMine) {
-    // Game over - reveal all mines
-    gameOver.value = true;
-    won.value = false;
-    revealAllMines();
-    stopTimer();
-    return;
-  }
-
-  // If no adjacent mines, reveal neighbors recursively
-  if (cell.adjacentMines === 0) {
-    revealNeighbors(row, col);
-  }
-
-  // Check for win
-  checkWin();
-}
-
-function countAdjacentFlags(row: number, col: number): number {
-  let count = 0;
-  for (let dr = -1; dr <= 1; dr++) {
-    for (let dc = -1; dc <= 1; dc++) {
-      if (dr === 0 && dc === 0) continue;
-      const newRow = row + dr;
-      const newCol = col + dc;
-      if (
-        newRow >= 0 &&
-        newRow < boardSize &&
-        newCol >= 0 &&
-        newCol < boardSize
-      ) {
-        const neighbor = getCell(newRow, newCol);
-        if (neighbor?.isFlagged) count++;
-      }
-    }
-  }
-  return count;
-}
-
-function countAdjacentUnrevealed(row: number, col: number): number {
-  let count = 0;
-  for (let dr = -1; dr <= 1; dr++) {
-    for (let dc = -1; dc <= 1; dc++) {
-      if (dr === 0 && dc === 0) continue;
-      const newRow = row + dr;
-      const newCol = col + dc;
-      if (
-        newRow >= 0 &&
-        newRow < boardSize &&
-        newCol >= 0 &&
-        newCol < boardSize
-      ) {
-        const neighbor = getCell(newRow, newCol);
-        if (neighbor && !neighbor.isRevealed) count++;
-      }
-    }
-  }
-  return count;
-}
-
-function autoFlagAdjacent(row: number, col: number): void {
-  for (let dr = -1; dr <= 1; dr++) {
-    for (let dc = -1; dc <= 1; dc++) {
-      if (dr === 0 && dc === 0) continue;
-      const newRow = row + dr;
-      const newCol = col + dc;
-      if (
-        newRow >= 0 &&
-        newRow < boardSize &&
-        newCol >= 0 &&
-        newCol < boardSize
-      ) {
-        const neighbor = getCell(newRow, newCol);
-        if (neighbor && !neighbor.isRevealed && !neighbor.isFlagged) {
-          neighbor.isFlagged = true;
-        }
-      }
-    }
-  }
-}
-
-function chordReveal(row: number, col: number): void {
-  for (let dr = -1; dr <= 1; dr++) {
-    for (let dc = -1; dc <= 1; dc++) {
-      if (dr === 0 && dc === 0) continue;
-      const newRow = row + dr;
-      const newCol = col + dc;
-      if (
-        newRow >= 0 &&
-        newRow < boardSize &&
-        newCol >= 0 &&
-        newCol < boardSize
-      ) {
-        const neighbor = getCell(newRow, newCol);
-        if (neighbor && !neighbor.isRevealed && !neighbor.isFlagged) {
-          neighbor.isRevealed = true;
-
-          if (neighbor.isMine) {
-            // Hit a mine - game over (flag was wrong!)
-            gameOver.value = true;
-            won.value = false;
-            revealAllMines();
-            stopTimer();
-            return;
-          }
-
-          // If no adjacent mines, reveal neighbors recursively
-          if (neighbor.adjacentMines === 0) {
-            revealNeighbors(newRow, newCol);
-          }
-        }
-      }
-    }
-  }
-
-  // Check for win after chord reveal
-  checkWin();
-}
-
-function revealNeighbors(row: number, col: number): void {
-  for (let dr = -1; dr <= 1; dr++) {
-    for (let dc = -1; dc <= 1; dc++) {
-      if (dr === 0 && dc === 0) continue;
-      const newRow = row + dr;
-      const newCol = col + dc;
-      if (
-        newRow >= 0 &&
-        newRow < boardSize &&
-        newCol >= 0 &&
-        newCol < boardSize
-      ) {
-        const neighbor = getCell(newRow, newCol);
-        if (
-          neighbor &&
-          !neighbor.isRevealed &&
-          !neighbor.isMine &&
-          !neighbor.isFlagged
-        ) {
-          neighbor.isRevealed = true;
-          if (neighbor.adjacentMines === 0) {
-            revealNeighbors(newRow, newCol);
-          }
-        }
-      }
-    }
-  }
+  gameInstance.handleCellClick(row, col);
+  syncState();
 }
 
 function toggleFlag(row: number, col: number): void {
-  if (gameOver.value) return;
-
-  const cell = getCell(row, col);
-  if (!cell || cell.isRevealed) return;
-
-  cell.isFlagged = !cell.isFlagged;
-}
-
-function revealAllMines(): void {
-  for (const row of board.value) {
-    for (const cell of row) {
-      if (cell.isMine) {
-        cell.isRevealed = true;
-      }
-    }
-  }
-}
-
-function checkWin(): void {
-  const totalCells = boardSize * boardSize;
-  const nonMineCells = totalCells - mineCount;
-
-  if (revealedCount.value === nonMineCells) {
-    gameOver.value = true;
-    won.value = true;
-    stopTimer();
-  }
+  gameInstance.handleRightClick(row, col);
+  syncState();
 }
 
 function getCellClass(row: number, col: number): string {
-  const cell = board.value[row]?.[col];
-  if (!cell) return "";
-
-  const classes: string[] = [];
-
-  if (cell.isRevealed) {
-    classes.push("revealed");
-    if (cell.isMine) {
-      classes.push("mine");
-    }
-  } else {
-    classes.push("hidden");
-  }
-
-  if (cell.isFlagged && !cell.isRevealed) {
-    classes.push("flagged");
-  }
-
-  return classes.join(" ");
+  // Access boardVersion to create reactive dependency
+  void boardVersion.value;
+  return gameInstance.getCellClass(row, col);
 }
 
 function getCellContent(row: number, col: number): string {
-  const cell = board.value[row]?.[col];
-  if (!cell) return "";
-
-  if (cell.isFlagged && !cell.isRevealed) {
-    return "🔥";
-  }
-
-  if (!cell.isRevealed) {
-    return getRandomForestEmoji(row, col);
-  }
-
-  if (cell.isMine) {
-    return "🐻";
-  }
-
-  if (cell.adjacentMines > 0) {
-    return cell.adjacentMines.toString();
-  }
-
-  return "";
+  // Access boardVersion to create reactive dependency
+  void boardVersion.value;
+  return gameInstance.getCellContent(row, col);
 }
 
-// Get deterministic forest emoji based on position
-function getRandomForestEmoji(row: number, col: number): string {
-  const emojis = ["🌲", "🌳", "🌿", "🍃", "🌲", "🌳", "🍂", "🌲"];
-  const index = (row * 7 + col * 13) % emojis.length;
-  return emojis[index] ?? "🌲";
-}
-
-// Get random tree line for decoration
 function getRandomTreeLine(): string {
-  const lines = [
-    "The Forest Awaits",
-    "Watch for Bears",
-    "Explore Carefully",
-    "Nature is Wild",
-  ];
-  return lines[Math.floor(Math.random() * lines.length)] ?? "The Forest Awaits";
+  return gameInstance.getRandomTreeLine();
 }
 
-function startTimer(): void {
-  timerInterval = setInterval(() => {
-    timer.value++;
-  }, 1000);
+function hasUnrevealedOpenArea(): boolean {
+  return gameInstance.hasHint();
 }
 
-function stopTimer(): void {
-  if (timerInterval) {
-    clearInterval(timerInterval);
-    timerInterval = null;
-  }
+function revealLargestOpenArea(): void {
+  gameInstance.useHint();
+  syncState();
 }
 
 function resetGame(): void {
-  stopTimer();
-  board.value = createBoard();
-  gameOver.value = false;
-  won.value = false;
-  flagMode.value = false;
-  timer.value = 0;
-  gameStarted.value = false;
+  gameInstance.reset();
+  syncState();
 }
 
-// Check if there are any unrevealed open areas left
-function hasUnrevealedOpenArea(): boolean {
-  for (let row = 0; row < boardSize; row++) {
-    for (let col = 0; col < boardSize; col++) {
-      const cell = getCell(row, col);
-      if (
-        cell &&
-        !cell.isMine &&
-        !cell.isRevealed &&
-        cell.adjacentMines === 0
-      ) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-// Find and reveal the cell that exposes the largest unrevealed open area
-function revealLargestOpenArea(): void {
-  if (gameOver.value) return;
-
-  // Start timer if not started
-  if (!gameStarted.value) {
-    gameStarted.value = true;
-    startTimer();
-  }
-
-  let bestCell = { row: 0, col: 0 };
-  let bestSize = 0;
-
-  // Find all UNREVEALED cells with 0 adjacent mines and calculate their flood-fill size
-  for (let row = 0; row < boardSize; row++) {
-    for (let col = 0; col < boardSize; col++) {
-      const cell = getCell(row, col);
-      if (
-        cell &&
-        !cell.isMine &&
-        !cell.isRevealed &&
-        cell.adjacentMines === 0
-      ) {
-        const size = calculateOpenAreaSize(row, col);
-        if (size > bestSize) {
-          bestSize = size;
-          bestCell = { row, col };
-        }
-      }
-    }
-  }
-
-  // If we found an open area, reveal it
-  if (bestSize > 0) {
-    const targetCell = getCell(bestCell.row, bestCell.col);
-    if (targetCell) {
-      targetCell.isRevealed = true;
-      revealNeighbors(bestCell.row, bestCell.col);
-      checkWin();
-    }
-  }
-}
-
-// Calculate how many cells would be revealed from a starting point (without modifying state)
-function calculateOpenAreaSize(startRow: number, startCol: number): number {
-  const visited = new Set<string>();
-  const queue: { row: number; col: number }[] = [
-    { row: startRow, col: startCol },
-  ];
-
-  while (queue.length > 0) {
-    const { row, col } = queue.shift()!;
-    const key = `${row},${col}`;
-
-    if (visited.has(key)) continue;
-    visited.add(key);
-
-    const cell = getCell(row, col);
-    if (!cell || cell.isMine) continue;
-
-    // If this cell has no adjacent mines, explore neighbors
-    if (cell.adjacentMines === 0) {
-      for (let dr = -1; dr <= 1; dr++) {
-        for (let dc = -1; dc <= 1; dc++) {
-          if (dr === 0 && dc === 0) continue;
-          const newRow = row + dr;
-          const newCol = col + dc;
-          if (
-            newRow >= 0 &&
-            newRow < boardSize &&
-            newCol >= 0 &&
-            newCol < boardSize
-          ) {
-            const neighborKey = `${newRow},${newCol}`;
-            if (!visited.has(neighborKey)) {
-              queue.push({ row: newRow, col: newCol });
-            }
-          }
-        }
-      }
-    }
-  }
-
-  return visited.size;
+function toggleFlagMode(): void {
+  gameInstance.toggleFlagMode();
+  flagMode.value = gameInstance.flagMode;
 }
 
 // Initialize game on mount
 onMounted(() => {
-  resetGame();
+  syncState();
 });
 
-// Clean up timer on unmount
+// Clean up on unmount
 onUnmounted(() => {
-  stopTimer();
+  gameInstance.destroy();
 });
 </script>
 
