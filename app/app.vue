@@ -5,6 +5,7 @@
         <v-tabs v-model="tab" bg-color="primary" class="mb-4">
           <v-tab value="home" to="/">Home</v-tab>
           <v-tab value="wordle" to="/wordle">Wordle</v-tab>
+          <v-tab value="minesweeper" to="/minesweeper">🏕️ Bear Patrol</v-tab>
         </v-tabs>
         <NuxtPage />
       </v-container>
