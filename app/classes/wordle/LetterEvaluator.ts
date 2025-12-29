@@ -32,7 +32,11 @@ export class LetterEvaluator {
   /**
    * Evaluate a single letter at a specific position
    */
-  evaluateLetter(letter: string, index: number, fullGuess: string): LetterState {
+  evaluateLetter(
+    letter: string,
+    index: number,
+    fullGuess: string
+  ): LetterState {
     const lowerLetter = letter.toLowerCase();
 
     // Green: correct letter in correct position
@@ -49,7 +53,9 @@ export class LetterEvaluator {
     const correctPositions = fullGuess
       .toLowerCase()
       .split("")
-      .filter((l, i) => l === lowerLetter && this.targetWord[i] === lowerLetter).length;
+      .filter(
+        (l, i) => l === lowerLetter && this.targetWord[i] === lowerLetter
+      ).length;
 
     // Count yellows before this position
     const yellowsBeforeThis = fullGuess

@@ -185,11 +185,7 @@ function createBoard(): Cell[][] {
     for (let col = 0; col < boardSize; col++) {
       const cell = newBoard[row]?.[col];
       if (cell && !cell.isMine) {
-        cell.adjacentMines = countAdjacentMines(
-          newBoard,
-          row,
-          col
-        );
+        cell.adjacentMines = countAdjacentMines(newBoard, row, col);
       }
     }
   }
@@ -390,7 +386,12 @@ function revealNeighbors(row: number, col: number): void {
         newCol < boardSize
       ) {
         const neighbor = getCell(newRow, newCol);
-        if (neighbor && !neighbor.isRevealed && !neighbor.isMine && !neighbor.isFlagged) {
+        if (
+          neighbor &&
+          !neighbor.isRevealed &&
+          !neighbor.isMine &&
+          !neighbor.isFlagged
+        ) {
           neighbor.isRevealed = true;
           if (neighbor.adjacentMines === 0) {
             revealNeighbors(newRow, newCol);
@@ -522,7 +523,12 @@ function hasUnrevealedOpenArea(): boolean {
   for (let row = 0; row < boardSize; row++) {
     for (let col = 0; col < boardSize; col++) {
       const cell = getCell(row, col);
-      if (cell && !cell.isMine && !cell.isRevealed && cell.adjacentMines === 0) {
+      if (
+        cell &&
+        !cell.isMine &&
+        !cell.isRevealed &&
+        cell.adjacentMines === 0
+      ) {
         return true;
       }
     }
@@ -533,21 +539,26 @@ function hasUnrevealedOpenArea(): boolean {
 // Find and reveal the cell that exposes the largest unrevealed open area
 function revealLargestOpenArea(): void {
   if (gameOver.value) return;
-  
+
   // Start timer if not started
   if (!gameStarted.value) {
     gameStarted.value = true;
     startTimer();
   }
-  
+
   let bestCell = { row: 0, col: 0 };
   let bestSize = 0;
-  
+
   // Find all UNREVEALED cells with 0 adjacent mines and calculate their flood-fill size
   for (let row = 0; row < boardSize; row++) {
     for (let col = 0; col < boardSize; col++) {
       const cell = getCell(row, col);
-      if (cell && !cell.isMine && !cell.isRevealed && cell.adjacentMines === 0) {
+      if (
+        cell &&
+        !cell.isMine &&
+        !cell.isRevealed &&
+        cell.adjacentMines === 0
+      ) {
         const size = calculateOpenAreaSize(row, col);
         if (size > bestSize) {
           bestSize = size;
@@ -556,7 +567,7 @@ function revealLargestOpenArea(): void {
       }
     }
   }
-  
+
   // If we found an open area, reveal it
   if (bestSize > 0) {
     const targetCell = getCell(bestCell.row, bestCell.col);
@@ -571,18 +582,20 @@ function revealLargestOpenArea(): void {
 // Calculate how many cells would be revealed from a starting point (without modifying state)
 function calculateOpenAreaSize(startRow: number, startCol: number): number {
   const visited = new Set<string>();
-  const queue: { row: number; col: number }[] = [{ row: startRow, col: startCol }];
-  
+  const queue: { row: number; col: number }[] = [
+    { row: startRow, col: startCol },
+  ];
+
   while (queue.length > 0) {
     const { row, col } = queue.shift()!;
     const key = `${row},${col}`;
-    
+
     if (visited.has(key)) continue;
     visited.add(key);
-    
+
     const cell = getCell(row, col);
     if (!cell || cell.isMine) continue;
-    
+
     // If this cell has no adjacent mines, explore neighbors
     if (cell.adjacentMines === 0) {
       for (let dr = -1; dr <= 1; dr++) {
@@ -605,7 +618,7 @@ function calculateOpenAreaSize(startRow: number, startCol: number): number {
       }
     }
   }
-  
+
   return visited.size;
 }
 
