@@ -57,7 +57,7 @@
         density="compact"
         class="mb-4"
         closable
-        @click:close="errorMessage = ''"
+        @click:close="clearError"
       >
         {{ errorMessage }}
       </v-alert>
@@ -148,37 +148,32 @@
 
 <script setup lang="ts">
 import wordListText from "~/data/words.txt?raw";
+import { WordleGame, KEYBOARD_ROWS } from "~/classes/wordle";
 
-interface Guess {
-  word: string;
-  letters: string[];
+// Initialize game instance
+const gameInstance = new WordleGame(wordListText);
+
+// Reactive state - we use refs that sync with the game instance
+const targetWord = ref(gameInstance.targetWord);
+const currentGuess = ref(gameInstance.currentGuess);
+const guesses = ref(gameInstance.guesses);
+const gameOver = ref(gameInstance.gameOver);
+const won = ref(gameInstance.won);
+const errorMessage = ref(gameInstance.errorMessage);
+
+// Keyboard layout from constants
+const keyboardRows = KEYBOARD_ROWS;
+
+// Sync state from game instance
+function syncState(): void {
+  const state = gameInstance.getState();
+  targetWord.value = state.targetWord;
+  currentGuess.value = state.currentGuess;
+  guesses.value = state.guesses;
+  gameOver.value = state.gameOver;
+  won.value = state.won;
+  errorMessage.value = state.errorMessage;
 }
-
-// Parse word list from file - filter to only 5-letter words
-const wordList = wordListText
-  .split("\n")
-  .map((w) => w.trim().toLowerCase())
-  .filter((w) => w.length === 5);
-
-// Create a Set for fast lookup when validating guesses
-const validWords = new Set(wordList);
-
-const targetWord = ref("");
-const currentGuess = ref("");
-const guesses = ref<Guess[]>([]);
-const gameOver = ref(false);
-const won = ref(false);
-const errorMessage = ref("");
-
-// Keyboard layout
-const keyboardRows = [
-  ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
-  ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
-  ["ENTER", "Z", "X", "C", "V", "B", "N", "M", "BACK"],
-];
-
-// Track the state of each letter: 'correct' (green), 'present' (yellow), 'absent' (grey), or undefined (not guessed)
-const letterStates = ref<Record<string, "correct" | "present" | "absent">>({});
 
 // Calculate empty rows (excluding current input row)
 const emptyRowCount = computed(() => {
@@ -187,178 +182,42 @@ const emptyRowCount = computed(() => {
   return Math.max(0, 6 - submitted - currentRow);
 });
 
-function getRandomWord(): string {
-  return wordList[Math.floor(Math.random() * wordList.length)];
-}
-
 function getLetterClass(letter: string, index: number, word: string): string {
-  const lowerLetter = letter.toLowerCase();
-  const lowerTarget = targetWord.value.toLowerCase();
-
-  // Green: correct letter in correct position
-  if (lowerTarget[index] === lowerLetter) {
-    return "bg-green text-white";
-  }
-
-  // Yellow: letter exists in word but wrong position
-  // Need to be careful about duplicate letters
-  const targetLetterCount = lowerTarget
-    .split("")
-    .filter((l) => l === lowerLetter).length;
-  const correctPositions = word
-    .toLowerCase()
-    .split("")
-    .filter(
-      (l, i) => l === lowerLetter && lowerTarget[i] === lowerLetter
-    ).length;
-  const yellowsBeforeThis = word
-    .toLowerCase()
-    .split("")
-    .slice(0, index)
-    .filter(
-      (l, i) =>
-        l === lowerLetter &&
-        lowerTarget[i] !== lowerLetter &&
-        lowerTarget.includes(lowerLetter)
-    ).length;
-
-  if (
-    lowerTarget.includes(lowerLetter) &&
-    correctPositions + yellowsBeforeThis < targetLetterCount
-  ) {
-    return "bg-yellow-darken-2 text-white";
-  }
-
-  // Grey: letter not in word
-  return "bg-grey-darken-1 text-white";
+  return gameInstance.getLetterClass(letter, index, word);
 }
 
 function getKeyClass(key: string): string {
-  if (key === "ENTER" || key === "BACK") {
-    return "special-key";
-  }
-  const state = letterStates.value[key.toLowerCase()];
-  if (state === "correct") return "bg-green text-white";
-  if (state === "present") return "bg-yellow-darken-2 text-white";
-  if (state === "absent") return "bg-grey-darken-1 text-white";
-  return "bg-grey-lighten-1"; // Not guessed yet
+  return gameInstance.getKeyClass(key);
 }
 
 function handleKeyClick(key: string): void {
-  if (gameOver.value) return;
-
-  if (key === "ENTER") {
-    if (currentGuess.value.length === 5) {
-      submitGuess();
-    }
-  } else if (key === "BACK") {
-    if (currentGuess.value.length > 0) {
-      currentGuess.value = currentGuess.value.slice(0, -1);
-      errorMessage.value = "";
-    }
-  } else {
-    if (currentGuess.value.length < 5) {
-      currentGuess.value += key.toLowerCase();
-      errorMessage.value = "";
-    }
-  }
-}
-
-function updateLetterStates(guess: string): void {
-  const lowerTarget = targetWord.value.toLowerCase();
-
-  for (let i = 0; i < guess.length; i++) {
-    const letter = guess[i].toLowerCase();
-    const currentState = letterStates.value[letter];
-
-    // Green takes priority over everything
-    if (lowerTarget[i] === letter) {
-      letterStates.value[letter] = "correct";
-    }
-    // Yellow only if not already green
-    else if (lowerTarget.includes(letter) && currentState !== "correct") {
-      letterStates.value[letter] = "present";
-    }
-    // Grey only if not already green or yellow
-    else if (!lowerTarget.includes(letter) && !currentState) {
-      letterStates.value[letter] = "absent";
-    }
-  }
+  gameInstance.handleKeyPress(key);
+  syncState();
 }
 
 function submitGuess(): void {
-  const guess = currentGuess.value.toLowerCase().trim();
-
-  if (guess.length !== 5) {
-    errorMessage.value = "Please enter a 5-letter word";
-    return;
-  }
-
-  if (!/^[a-zA-Z]+$/.test(guess)) {
-    errorMessage.value = "Only letters are allowed";
-    return;
-  }
-
-  if (!validWords.has(guess)) {
-    errorMessage.value = "Not a valid word";
-    return;
-  }
-
-  errorMessage.value = "";
-
-  guesses.value.push({
-    word: guess,
-    letters: guess.split(""),
-  });
-
-  // Update keyboard letter states
-  updateLetterStates(guess);
-
-  if (guess === targetWord.value.toLowerCase()) {
-    gameOver.value = true;
-    won.value = true;
-  } else if (guesses.value.length >= 6) {
-    gameOver.value = true;
-    won.value = false;
-  }
-
-  currentGuess.value = "";
+  gameInstance.submitGuess();
+  syncState();
 }
 
 function handleKeydown(event: KeyboardEvent): void {
-  if (gameOver.value) return;
-
-  const key = event.key;
-
-  // Handle letter input
-  if (/^[a-zA-Z]$/.test(key) && currentGuess.value.length < 5) {
-    currentGuess.value += key.toLowerCase();
-    errorMessage.value = "";
-  }
-  // Handle backspace
-  else if (key === "Backspace" && currentGuess.value.length > 0) {
-    currentGuess.value = currentGuess.value.slice(0, -1);
-    errorMessage.value = "";
-  }
-  // Handle enter to submit
-  else if (key === "Enter" && currentGuess.value.length === 5) {
-    submitGuess();
-  }
+  gameInstance.handleKeyPress(event.key);
+  syncState();
 }
 
 function resetGame(): void {
-  targetWord.value = getRandomWord();
-  currentGuess.value = "";
-  guesses.value = [];
-  gameOver.value = false;
-  won.value = false;
-  errorMessage.value = "";
-  letterStates.value = {};
+  gameInstance.reset();
+  syncState();
+}
+
+function clearError(): void {
+  gameInstance.clearError();
+  syncState();
 }
 
 // Initialize game on mount and add keyboard listener
 onMounted(() => {
-  resetGame();
+  syncState();
   window.addEventListener("keydown", handleKeydown);
 });
 
