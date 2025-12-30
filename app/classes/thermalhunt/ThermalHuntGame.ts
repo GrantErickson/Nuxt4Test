@@ -70,6 +70,20 @@ export class ThermalHuntGame {
   }
 
   /**
+   * Get the maximum cell distance from target
+   */
+  get maxCellDistance(): number {
+    return this.grid.maxCellDistance;
+  }
+
+  /**
+   * Reveal all cells at a specific distance (for animated reveal)
+   */
+  revealAtDistance(distance: number): void {
+    this.grid.revealAtDistance(distance);
+  }
+
+  /**
    * Handle cell click
    */
   handleCellClick(row: number, col: number): boolean {
@@ -86,6 +100,7 @@ export class ThermalHuntGame {
       this._gameOver = true;
       this._won = true;
       this.updateBestScore();
+      // Don't reveal all - let CSS animation handle the visual reveal
     }
 
     return true;
@@ -105,6 +120,13 @@ export class ThermalHuntGame {
   getCellStyle(row: number, col: number): string {
     const cell = this.grid.getCell(row, col);
     return this.heatRenderer.getCellStyle(cell, this._gameOver);
+  }
+
+  /**
+   * Get heat color for a distance value
+   */
+  getHeatColor(distance: number): string {
+    return this.heatRenderer.getHeatColorStyle(distance);
   }
 
   /**

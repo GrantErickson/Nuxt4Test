@@ -103,8 +103,14 @@ function calculateGridDimensions(): { rows: number; cols: number } {
   const availableWidth = window.innerWidth - SIDE_PADDING;
   const availableHeight = window.innerHeight - HEADER_FOOTER_HEIGHT;
 
-  const cols = Math.max(MIN_SIZE, Math.min(MAX_SIZE, Math.floor(availableWidth / CELL_SIZE)));
-  const rows = Math.max(MIN_SIZE, Math.min(MAX_SIZE, Math.floor(availableHeight / CELL_SIZE)));
+  const cols = Math.max(
+    MIN_SIZE,
+    Math.min(MAX_SIZE, Math.floor(availableWidth / CELL_SIZE))
+  );
+  const rows = Math.max(
+    MIN_SIZE,
+    Math.min(MAX_SIZE, Math.floor(availableHeight / CELL_SIZE))
+  );
 
   return { rows, cols };
 }
@@ -168,7 +174,23 @@ function getCellClass(row: number, col: number): string {
 
 function getCellStyle(row: number, col: number): string {
   void stateVersion.value;
-  return gameInstance.getCellStyle(row, col);
+  const baseStyle = gameInstance.getCellStyle(row, col);
+  
+  // Add animation delay for wave reveal on win
+  if (gameInstance.won && gameInstance.gameOver) {
+    const cell = gameInstance.cells[row]?.[col];
+    if (cell && !cell.isClicked) {
+      const maxDist = gameInstance.maxCellDistance;
+      // Spread delays over 3000ms based on max distance
+      const delayPerDistance = maxDist > 0 ? 3000 / maxDist : 0;
+      const delay = cell.distance * delayPerDistance;
+      // Use CSS variable so pseudo-element can access the heat color
+      const heatColor = gameInstance.getHeatColor(cell.distance);
+      return `--heat-color: ${heatColor}; ${baseStyle}; animation-delay: ${delay}ms;`;
+    }
+  }
+  
+  return baseStyle;
 }
 
 function getCellContent(row: number, col: number): string {
@@ -243,6 +265,42 @@ onUnmounted(() => {
     inset -1px -1px 2px rgba(0, 0, 0, 0.2);
 }
 
+.cell.hidden.animating {
+  position: relative;
+  background: var(--heat-color, transparent) !important;
+  box-shadow: none !important;
+}
+
+.cell.hidden.animating::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, #bdbdbd, #9e9e9e);
+  box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.3),
+    inset -1px -1px 2px rgba(0, 0, 0, 0.2);
+  animation: fade-out-gray 0.4s ease-out forwards;
+  animation-delay: inherit;
+  pointer-events: none;
+}
+
+@keyframes fade-out-gray {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes reveal-wave {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.7;
+  }
+}
+
 .cell.hidden:hover {
   background: linear-gradient(145deg, #e0e0e0, #bdbdbd);
   transform: scale(1.15);
@@ -252,6 +310,15 @@ onUnmounted(() => {
 .cell.revealed {
   color: rgba(0, 0, 0, 0.7);
   text-shadow: 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+.cell.clicked {
+  border: 2px solid #1a237e;
+  box-shadow: 0 0 4px rgba(26, 35, 126, 0.6);
+}
+
+.cell.auto-revealed {
+  opacity: 0.7;
 }
 
 .cell.target {

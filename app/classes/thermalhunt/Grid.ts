@@ -32,6 +32,7 @@ export class Grid {
         const distance = this.calculateDistance(row, col);
         this.cells[row]![col] = {
           isRevealed: false,
+          isClicked: false,
           distance,
           isTarget:
             row === this._targetPosition.row &&
@@ -59,14 +60,54 @@ export class Grid {
   }
 
   /**
-   * Reveal a cell
+   * Reveal a cell (marks as clicked since user clicked it)
    */
   revealCell(row: number, col: number): Cell | undefined {
     const cell = this.getCell(row, col);
     if (cell && !cell.isRevealed) {
       cell.isRevealed = true;
+      cell.isClicked = true;
     }
     return cell;
+  }
+
+  /**
+   * Reveal all cells (for end of game)
+   */
+  revealAll(): void {
+    for (const row of this.cells) {
+      for (const cell of row) {
+        if (!cell.isRevealed) {
+          cell.isRevealed = true;
+        }
+      }
+    }
+  }
+
+  /**
+   * Reveal all cells at a specific distance from target
+   */
+  revealAtDistance(targetDistance: number): void {
+    for (const row of this.cells) {
+      for (const cell of row) {
+        if (cell.distance === targetDistance) {
+          cell.isRevealed = true;
+        }
+      }
+    }
+  }
+
+  /**
+   * Get the maximum distance any cell has from target
+   */
+  get maxCellDistance(): number {
+    let max = 0;
+    for (const row of this.cells) {
+      for (const cell of row) {
+        if (cell.distance > max) max = cell.distance;
+      }
+    }
+    return max;
   }
 
   /**

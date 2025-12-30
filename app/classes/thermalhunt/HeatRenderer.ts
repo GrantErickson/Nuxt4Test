@@ -41,9 +41,14 @@ export class HeatRenderer {
     if (!cell) return "";
 
     if (cell.isTarget && (cell.isRevealed || isGameOver)) {
-      return "target revealed";
+      return "target revealed clicked";
+    } else if (cell.isRevealed && cell.isClicked) {
+      return "revealed clicked";
     } else if (cell.isRevealed) {
-      return "revealed";
+      return "revealed auto-revealed";
+    } else if (isGameOver && !cell.isRevealed) {
+      // Cells that will be animated on reveal
+      return "hidden animating";
     } else {
       return "hidden";
     }
@@ -58,6 +63,9 @@ export class HeatRenderer {
     if (cell.isTarget && (cell.isRevealed || isGameOver)) {
       return `background-color: ${this.getHeatColorStyle(0)}`;
     } else if (cell.isRevealed) {
+      return `background-color: ${this.getHeatColorStyle(cell.distance)}`;
+    } else if (isGameOver) {
+      // Show all cells when game is over
       return `background-color: ${this.getHeatColorStyle(cell.distance)}`;
     }
 

@@ -7,6 +7,7 @@ export interface Position {
 
 export interface Cell {
   isRevealed: boolean;
+  isClicked: boolean; // True if manually clicked by user
   distance: number; // Manhattan or Euclidean distance to target
   isTarget: boolean;
 }
