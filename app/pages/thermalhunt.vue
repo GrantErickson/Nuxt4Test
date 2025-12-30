@@ -175,7 +175,7 @@ function getCellClass(row: number, col: number): string {
 function getCellStyle(row: number, col: number): string {
   void stateVersion.value;
   const baseStyle = gameInstance.getCellStyle(row, col);
-  
+
   // Add animation delay for wave reveal on win
   if (gameInstance.won && gameInstance.gameOver) {
     const cell = gameInstance.cells[row]?.[col];
@@ -189,7 +189,7 @@ function getCellStyle(row: number, col: number): string {
       return `--heat-color: ${heatColor}; ${baseStyle}; animation-delay: ${delay}ms;`;
     }
   }
-  
+
   return baseStyle;
 }
 
@@ -272,7 +272,7 @@ onUnmounted(() => {
 }
 
 .cell.hidden.animating::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(145deg, #bdbdbd, #9e9e9e);

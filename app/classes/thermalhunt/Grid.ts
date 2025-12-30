@@ -43,13 +43,12 @@ export class Grid {
   }
 
   /**
-   * Calculate Manhattan distance from a cell to the target
+   * Calculate Euclidean distance from a cell to the target (creates circular pattern)
    */
   calculateDistance(row: number, col: number): number {
-    return (
-      Math.abs(row - this._targetPosition.row) +
-      Math.abs(col - this._targetPosition.col)
-    );
+    const deltaRow = row - this._targetPosition.row;
+    const deltaCol = col - this._targetPosition.col;
+    return Math.round(Math.sqrt(deltaRow * deltaRow + deltaCol * deltaCol));
   }
 
   /**
