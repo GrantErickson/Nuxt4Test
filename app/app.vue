@@ -6,6 +6,7 @@
           <v-tab value="home" to="/">Home</v-tab>
           <v-tab value="wordle" to="/wordle">Wordle</v-tab>
           <v-tab value="minesweeper" to="/minesweeper">🏕️ Bear Patrol</v-tab>
+          <v-tab value="mastermind" to="/mastermind">🎯 Mastermind</v-tab>
         </v-tabs>
         <NuxtPage />
       </v-container>
