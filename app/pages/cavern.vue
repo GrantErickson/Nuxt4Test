@@ -19,10 +19,21 @@
 
     <v-card-text class="pa-4">
       <!-- Game status alerts -->
-      <v-alert v-if="gameState.hasWon" type="success" class="mb-3" :icon="false">
-        🎉 You collected all {{ gameState.totalGems }} gems! Press Enter or click New Game.
+      <v-alert
+        v-if="gameState.hasWon"
+        type="success"
+        class="mb-3"
+        :icon="false"
+      >
+        🎉 You collected all {{ gameState.totalGems }} gems! Press Enter or
+        click New Game.
       </v-alert>
-      <v-alert v-else-if="gameState.isDead" type="error" class="mb-3" :icon="false">
+      <v-alert
+        v-else-if="gameState.isDead"
+        type="error"
+        class="mb-3"
+        :icon="false"
+      >
         💀 You fell into the water! Press Enter or click New Game.
       </v-alert>
       <div v-else class="text-center text-caption text-grey-lighten-1 mb-2">
@@ -46,7 +57,11 @@
 
       <!-- Controls -->
       <div class="d-flex justify-center ga-4 mt-4 flex-wrap">
-        <v-btn color="brown-darken-2" prepend-icon="mdi-refresh" @click="regenerate">
+        <v-btn
+          color="brown-darken-2"
+          prepend-icon="mdi-refresh"
+          @click="regenerate"
+        >
           New Game
         </v-btn>
         <v-btn-toggle v-model="caveStyle" mandatory color="brown">
@@ -177,7 +192,10 @@ function regenerate(): void {
 
 function handleKeydown(event: KeyboardEvent): void {
   // Restart on Enter if game over
-  if (event.key === "Enter" && (gameState.value.isDead || gameState.value.hasWon)) {
+  if (
+    event.key === "Enter" &&
+    (gameState.value.isDead || gameState.value.hasWon)
+  ) {
     regenerate();
     return;
   }
@@ -276,8 +294,12 @@ onUnmounted(() => {
 }
 
 @keyframes breakable-pulse {
-  from { box-shadow: 0 0 2px #ff9800; }
-  to { box-shadow: 0 0 6px #ff9800, 0 0 10px #ff5722; }
+  from {
+    box-shadow: 0 0 2px #ff9800;
+  }
+  to {
+    box-shadow: 0 0 6px #ff9800, 0 0 10px #ff5722;
+  }
 }
 
 .cell.breakable:hover {
@@ -290,14 +312,30 @@ onUnmounted(() => {
   background: #8d6e63;
 }
 
-.cell.floor.region-1 { background: #8d6e63; }
-.cell.floor.region-2 { background: #a1887f; }
-.cell.floor.region-3 { background: #795548; }
-.cell.floor.region-4 { background: #6d4c41; }
-.cell.floor.region-5 { background: #8b7355; }
-.cell.floor.region-6 { background: #9e8b7d; }
-.cell.floor.region-7 { background: #7b6b5a; }
-.cell.floor.region-8 { background: #a08070; }
+.cell.floor.region-1 {
+  background: #8d6e63;
+}
+.cell.floor.region-2 {
+  background: #a1887f;
+}
+.cell.floor.region-3 {
+  background: #795548;
+}
+.cell.floor.region-4 {
+  background: #6d4c41;
+}
+.cell.floor.region-5 {
+  background: #8b7355;
+}
+.cell.floor.region-6 {
+  background: #9e8b7d;
+}
+.cell.floor.region-7 {
+  background: #7b6b5a;
+}
+.cell.floor.region-8 {
+  background: #a08070;
+}
 
 /* Player on floor */
 .cell.has-player {
@@ -310,9 +348,16 @@ onUnmounted(() => {
 }
 
 @keyframes death-shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-3px) rotate(-5deg); }
-  75% { transform: translateX(3px) rotate(5deg); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px) rotate(-5deg);
+  }
+  75% {
+    transform: translateX(3px) rotate(5deg);
+  }
 }
 
 /* Water styles */
@@ -322,8 +367,13 @@ onUnmounted(() => {
 }
 
 @keyframes water-shimmer {
-  0%, 100% { opacity: 0.8; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 /* Crystal styles */
@@ -333,8 +383,12 @@ onUnmounted(() => {
 }
 
 @keyframes crystal-glow {
-  from { box-shadow: 0 0 3px #e1bee7; }
-  to { box-shadow: 0 0 8px #ce93d8, 0 0 12px #ba68c8; }
+  from {
+    box-shadow: 0 0 3px #e1bee7;
+  }
+  to {
+    box-shadow: 0 0 8px #ce93d8, 0 0 12px #ba68c8;
+  }
 }
 
 /* Legend boxes */
