@@ -20,15 +20,15 @@ export class Grid {
   initialize(): void {
     // Pick random target position
     this._targetPosition = {
-      row: Math.floor(Math.random() * this.config.gridSize),
-      col: Math.floor(Math.random() * this.config.gridSize),
+      row: Math.floor(Math.random() * this.config.rows),
+      col: Math.floor(Math.random() * this.config.cols),
     };
 
     // Create cells
     this.cells = [];
-    for (let row = 0; row < this.config.gridSize; row++) {
+    for (let row = 0; row < this.config.rows; row++) {
       this.cells[row] = [];
-      for (let col = 0; col < this.config.gridSize; col++) {
+      for (let col = 0; col < this.config.cols; col++) {
         const distance = this.calculateDistance(row, col);
         this.cells[row]![col] = {
           isRevealed: false,
@@ -77,10 +77,17 @@ export class Grid {
   }
 
   /**
-   * Get grid size
+   * Get row count
    */
-  get size(): number {
-    return this.config.gridSize;
+  get rows(): number {
+    return this.config.rows;
+  }
+
+  /**
+   * Get column count
+   */
+  get cols(): number {
+    return this.config.cols;
   }
 
   /**

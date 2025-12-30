@@ -1,10 +1,13 @@
 <template>
-  <v-card class="mx-auto thermal-card" max-width="800">
+  <v-card class="mx-auto thermal-card">
     <v-card-title
-      class="bg-gradient text-white d-flex align-center justify-space-between"
+      class="bg-gradient text-white d-flex align-center justify-space-between flex-wrap ga-2"
     >
       <span>🌡️ Thermal Hunt</span>
-      <div class="d-flex align-center ga-4">
+      <div class="d-flex align-center ga-2 flex-wrap">
+        <v-chip color="grey-darken-1" variant="flat" size="small">
+          📐 {{ gridCols }}×{{ gridRows }}
+        </v-chip>
         <v-chip color="orange-darken-2" variant="flat">
           🔍 {{ revealedCount }} cells
         </v-chip>
@@ -28,13 +31,9 @@
       </div>
 
       <!-- Game over message -->
-      <v-alert
-        v-if="gameOver"
-        type="success"
-        class="mb-4"
-        :icon="false"
-      >
-        🎉 You found the hidden spot in <strong>{{ revealedCount }}</strong> clicks!
+      <v-alert v-if="gameOver" type="success" class="mb-4" :icon="false">
+        🎉 You found the hidden spot in
+        <strong>{{ revealedCount }}</strong> clicks!
         <template v-if="revealedCount === bestScore">
           🏆 New best score!
         </template>
@@ -42,13 +41,9 @@
 
       <!-- Game grid -->
       <div class="d-flex flex-column align-center">
-        <div
-          v-for="row in gridSize"
-          :key="'row-' + row"
-          class="d-flex"
-        >
+        <div v-for="row in gridRows" :key="'row-' + row" class="d-flex">
           <div
-            v-for="col in gridSize"
+            v-for="col in gridCols"
             :key="'cell-' + row + '-' + col"
             class="cell d-flex align-center justify-center"
             :class="getCellClass(row - 1, col - 1)"
@@ -74,7 +69,7 @@
       <!-- Instructions -->
       <div class="text-center text-caption text-grey-darken-1 mt-4">
         Click cells to reveal their heat. Each distance has a unique color!
-        <br>
+        <br />
         🔥 Red = Very close &nbsp;|&nbsp; 🧊 Blue = Far away
       </div>
     </v-card-text>
@@ -85,7 +80,7 @@
       <div class="d-flex align-center ga-2">
         <span class="text-caption">🔥 Close (0)</span>
         <div class="legend-gradient"></div>
-        <span class="text-caption">Far (48) 🧊</span>
+        <span class="text-caption">Far ({{ maxDistance }}) 🧊</span>
       </div>
     </v-card-text>
   </v-card>
@@ -94,8 +89,36 @@
 <script setup lang="ts">
 import { ThermalHuntGame } from "~/classes/thermalhunt";
 
-// Initialize game instance
-const gameInstance = new ThermalHuntGame();
+// Constants for grid sizing
+const MIN_SIZE = 10;
+const MAX_SIZE = 40;
+const CELL_SIZE = 24; // pixels per cell
+const HEADER_FOOTER_HEIGHT = 450; // Reserve space for header/controls/legend/tabs
+const SIDE_PADDING = 48;
+
+// Calculate grid dimensions based on screen size
+function calculateGridDimensions(): { rows: number; cols: number } {
+  if (typeof window === "undefined") return { rows: 20, cols: 25 };
+
+  const availableWidth = window.innerWidth - SIDE_PADDING;
+  const availableHeight = window.innerHeight - HEADER_FOOTER_HEIGHT;
+
+  const cols = Math.max(MIN_SIZE, Math.min(MAX_SIZE, Math.floor(availableWidth / CELL_SIZE)));
+  const rows = Math.max(MIN_SIZE, Math.min(MAX_SIZE, Math.floor(availableHeight / CELL_SIZE)));
+
+  return { rows, cols };
+}
+
+// Reactive grid dimensions
+const gridRows = ref(20);
+const gridCols = ref(25);
+
+// Game instance (will be recreated on resize)
+let gameInstance = new ThermalHuntGame({
+  rows: gridRows.value,
+  cols: gridCols.value,
+  maxDistance: gridRows.value + gridCols.value,
+});
 
 // Reactive state
 const gameOver = ref(false);
@@ -106,11 +129,9 @@ const bestScore = ref<number | null>(null);
 // Version counter for reactivity
 const stateVersion = ref(0);
 
-// Constants
-const gridSize = gameInstance.gridSize;
-
 // Computed
 const temperatureText = computed(() => gameInstance.getTemperatureText());
+const maxDistance = computed(() => gridRows.value - 1 + gridCols.value - 1);
 
 // Sync state from game instance
 function syncState(): void {
@@ -120,6 +141,19 @@ function syncState(): void {
   lastDistance.value = state.lastDistance;
   bestScore.value = gameInstance.bestScore;
   stateVersion.value++;
+}
+
+// Initialize game with calculated size
+function initializeGame(): void {
+  const { rows, cols } = calculateGridDimensions();
+  gridRows.value = rows;
+  gridCols.value = cols;
+  gameInstance = new ThermalHuntGame({
+    rows,
+    cols,
+    maxDistance: rows + cols,
+  });
+  syncState();
 }
 
 function handleClick(row: number, col: number): void {
@@ -153,13 +187,32 @@ function getTemperatureChipColor(): string {
 }
 
 function resetGame(): void {
-  gameInstance.reset();
+  // Recalculate grid dimensions for new game
+  const { rows, cols } = calculateGridDimensions();
+  gridRows.value = rows;
+  gridCols.value = cols;
+  gameInstance = new ThermalHuntGame({
+    rows,
+    cols,
+    maxDistance: rows + cols,
+  });
   syncState();
+}
+
+// Handle window resize - only recalculate on new game
+function handleResize(): void {
+  // Don't interrupt active games, just update for next game
 }
 
 // Initialize on mount
 onMounted(() => {
-  syncState();
+  initializeGame();
+  window.addEventListener("resize", handleResize);
+});
+
+// Cleanup
+onUnmounted(() => {
+  window.removeEventListener("resize", handleResize);
 });
 </script>
 

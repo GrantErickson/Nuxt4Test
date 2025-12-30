@@ -12,13 +12,15 @@ export interface Cell {
 }
 
 export interface GameConfig {
-  gridSize: number;
+  rows: number;
+  cols: number;
   maxDistance: number; // For color scaling
 }
 
 export const DEFAULT_CONFIG: GameConfig = {
-  gridSize: 25,
-  maxDistance: 35, // Approx max Manhattan distance on 25x25 grid
+  rows: 25,
+  cols: 25,
+  maxDistance: 48, // Approx max Manhattan distance
 };
 
 // Temperature colors from hot (close) to cold (far)

@@ -27,7 +27,8 @@ export class ThermalHuntGame {
   constructor(config: GameConfig = DEFAULT_CONFIG) {
     this.config = config;
     this.grid = new Grid(config);
-    this.heatRenderer = new HeatRenderer();
+    // Max Manhattan distance is (rows-1) + (cols-1)
+    this.heatRenderer = new HeatRenderer(config.rows - 1 + config.cols - 1);
     this.loadBestScore();
   }
 
@@ -40,8 +41,12 @@ export class ThermalHuntGame {
     return this._won;
   }
 
-  get gridSize(): number {
-    return this.grid.size;
+  get rows(): number {
+    return this.grid.rows;
+  }
+
+  get cols(): number {
+    return this.grid.cols;
   }
 
   get revealedCount(): number {

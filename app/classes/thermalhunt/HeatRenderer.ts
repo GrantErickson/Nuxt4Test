@@ -1,25 +1,35 @@
 import type { Cell } from "./types";
 
-// Maximum possible Manhattan distance on a 25x25 grid
-const MAX_DISTANCE = 48;
-
 /**
  * Handles rendering colors based on distance (heat) for Thermal Hunt.
  * Each distance gets a unique color on the red-to-blue spectrum.
  */
 export class HeatRenderer {
+  private maxDistance: number;
+
+  constructor(maxDistance: number = 48) {
+    this.maxDistance = maxDistance;
+  }
+
+  /**
+   * Update the max distance (for dynamic grid sizes)
+   */
+  setMaxDistance(maxDistance: number): void {
+    this.maxDistance = maxDistance;
+  }
+
   /**
    * Get a unique HSL color for a distance value.
    * Distance 0 = red (hue 0), max distance = blue (hue 240)
    */
   getHeatColorStyle(distance: number): string {
     // Clamp distance to valid range
-    const d = Math.min(distance, MAX_DISTANCE);
-    
+    const d = Math.min(distance, this.maxDistance);
+
     // Map distance to hue: 0 (red) -> 240 (blue)
     // We go through orange, yellow, green, cyan, to blue
-    const hue = Math.round((d / MAX_DISTANCE) * 240);
-    
+    const hue = Math.round((d / this.maxDistance) * 240);
+
     // Keep saturation high and lightness at 50% for vibrant colors
     return `hsl(${hue}, 85%, 50%)`;
   }
