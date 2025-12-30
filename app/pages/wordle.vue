@@ -164,6 +164,9 @@ const errorMessage = ref(gameInstance.errorMessage);
 // Keyboard layout from constants
 const keyboardRows = KEYBOARD_ROWS;
 
+// Version counter to force re-render of keyboard
+const stateVersion = ref(0);
+
 // Sync state from game instance
 function syncState(): void {
   const state = gameInstance.getState();
@@ -173,6 +176,8 @@ function syncState(): void {
   gameOver.value = state.gameOver;
   won.value = state.won;
   errorMessage.value = state.errorMessage;
+  // Increment to trigger keyboard re-render
+  stateVersion.value++;
 }
 
 // Calculate empty rows (excluding current input row)
@@ -187,6 +192,8 @@ function getLetterClass(letter: string, index: number, word: string): string {
 }
 
 function getKeyClass(key: string): string {
+  // Access stateVersion to create reactive dependency
+  void stateVersion.value;
   return gameInstance.getKeyClass(key);
 }
 
