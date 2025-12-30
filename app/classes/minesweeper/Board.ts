@@ -1,4 +1,4 @@
-import type { Cell, GameConfig, Position } from "./types";
+import type { Cell, GameConfig } from "./types";
 import { DEFAULT_CONFIG } from "./types";
 
 /**

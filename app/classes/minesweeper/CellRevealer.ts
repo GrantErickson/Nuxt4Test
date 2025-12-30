@@ -1,4 +1,3 @@
-import type { Cell, Position } from "./types";
 import type { Board } from "./Board";
 
 export interface RevealResult {
