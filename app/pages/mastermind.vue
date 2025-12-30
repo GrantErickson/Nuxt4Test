@@ -89,7 +89,9 @@
             :key="'current-' + n"
             class="peg peg-slot"
             :class="
-              currentGuess[n - 1] ? 'bg-' + currentGuess[n - 1] : 'bg-grey-darken-1'
+              currentGuess[n - 1]
+                ? 'bg-' + currentGuess[n - 1]
+                : 'bg-grey-darken-1'
             "
             @click="removeColorAt(n - 1)"
           >
@@ -102,7 +104,10 @@
       </div>
 
       <!-- Color picker -->
-      <div v-if="!gameOver" class="color-picker d-flex justify-center ga-2 mb-4">
+      <div
+        v-if="!gameOver"
+        class="color-picker d-flex justify-center ga-2 mb-4"
+      >
         <v-btn
           v-for="color in availableColors"
           :key="color"
@@ -160,7 +165,11 @@
 </template>
 
 <script setup lang="ts">
-import { MastermindGame, type PegColor, type Guess } from "~/classes/mastermind";
+import {
+  MastermindGame,
+  type PegColor,
+  type Guess,
+} from "~/classes/mastermind";
 
 // Initialize game instance
 const gameInstance = new MastermindGame();
@@ -177,8 +186,12 @@ const codeLength = gameInstance.codeLength;
 const availableColors = gameInstance.availableColors;
 
 // Computed
-const remainingGuesses = computed(() => gameInstance.maxGuesses - guesses.value.length);
-const isGuessComplete = computed(() => currentGuess.value.length === codeLength);
+const remainingGuesses = computed(
+  () => gameInstance.maxGuesses - guesses.value.length
+);
+const isGuessComplete = computed(
+  () => currentGuess.value.length === codeLength
+);
 
 // Sync state from game instance
 function syncState(): void {
