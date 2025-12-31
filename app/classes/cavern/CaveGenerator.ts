@@ -214,7 +214,8 @@ export class CaveGenerator {
       this.reidentifyRegions();
 
       // Get all cells grouped by region
-      const regionCells: Map<number, { row: number; col: number }[]> = new Map();
+      const regionCells: Map<number, { row: number; col: number }[]> =
+        new Map();
 
       for (let row = 0; row < this.config.rows; row++) {
         for (let col = 0; col < this.config.cols; col++) {
@@ -312,7 +313,8 @@ export class CaveGenerator {
 
     for (const cell1 of sample1) {
       for (const cell2 of sample2) {
-        const dist = Math.abs(cell1.row - cell2.row) + Math.abs(cell1.col - cell2.col);
+        const dist =
+          Math.abs(cell1.row - cell2.row) + Math.abs(cell1.col - cell2.col);
         if (dist < minDist) {
           minDist = dist;
         }
@@ -331,7 +333,10 @@ export class CaveGenerator {
   ): void {
     // Find the closest pair of cells between the two regions
     let minDist = Infinity;
-    let bestPair: { cell1: { row: number; col: number }; cell2: { row: number; col: number } } | null = null;
+    let bestPair: {
+      cell1: { row: number; col: number };
+      cell2: { row: number; col: number };
+    } | null = null;
 
     // Use more samples to find better connection points
     const sample1 = this.sampleCells(region1Cells, 100);
@@ -339,7 +344,8 @@ export class CaveGenerator {
 
     for (const cell1 of sample1) {
       for (const cell2 of sample2) {
-        const dist = Math.abs(cell1.row - cell2.row) + Math.abs(cell1.col - cell2.col);
+        const dist =
+          Math.abs(cell1.row - cell2.row) + Math.abs(cell1.col - cell2.col);
         if (dist < minDist) {
           minDist = dist;
           bestPair = { cell1, cell2 };

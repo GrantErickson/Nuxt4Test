@@ -171,7 +171,7 @@ export class CavernGame {
     const cell = this.getCell(row, col);
     if (!cell) return "";
 
-    const classes = [cell.type];
+    const classes: string[] = [cell.type];
 
     // Add region class for floor and water cells to enable region coloring
     // (only floor uses it visually, but water inherits region from floor)
