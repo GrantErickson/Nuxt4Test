@@ -121,15 +121,15 @@ let game: PhysicsGame | null = null;
 // Reactive state (updated via callback)
 const stateVersion = ref(0);
 const shapeCount = computed(() => {
-  stateVersion.value; // Force reactivity
+  const _ = stateVersion.value; // Force reactivity dependency
   return game?.shapeCount ?? 0;
 });
 const elapsed = computed(() => {
-  stateVersion.value;
+  const _ = stateVersion.value; // Force reactivity dependency
   return game?.elapsed ?? 0;
 });
 const isPaused = computed(() => {
-  stateVersion.value;
+  const _ = stateVersion.value; // Force reactivity dependency
   return game?.isPaused ?? false;
 });
 
