@@ -1,4 +1,4 @@
-import Matter from "matter-js";
+import type Matter from "matter-js";
 import type { TrackedShape } from "./types";
 
 export class ShapeTracker {

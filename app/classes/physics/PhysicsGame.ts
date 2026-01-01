@@ -9,6 +9,7 @@ export class PhysicsGame {
   private render: Matter.Render | null = null;
   private runner: Matter.Runner | null = null;
   private world: Matter.World | null = null;
+  private canvas: HTMLCanvasElement | null = null;
 
   private readonly shapeFactory: ShapeFactory;
   private readonly shapeTracker: ShapeTracker;
@@ -44,6 +45,8 @@ export class PhysicsGame {
   }
 
   setup(canvas: HTMLCanvasElement, container: HTMLElement): void {
+    this.canvas = canvas;
+
     // Create engine
     this.engine = Matter.Engine.create();
     this.world = this.engine.world;
@@ -59,6 +62,11 @@ export class PhysicsGame {
         wireframes: false,
         background: "#1a1a2e",
       },
+    });
+
+    // Add custom gradient rendering
+    Matter.Events.on(this.render, "afterRender", () => {
+      this.renderGradients();
     });
 
     this.createWalls();
@@ -123,6 +131,72 @@ export class PhysicsGame {
     );
 
     Matter.Composite.add(this.world, [ground, leftWall, rightWall]);
+  }
+
+  private renderGradients(): void {
+    if (!this.canvas || !this.world) return;
+
+    const ctx = this.canvas.getContext("2d");
+    if (!ctx) return;
+
+    const bodies = Matter.Composite.allBodies(this.world);
+
+    for (const body of bodies) {
+      if (body.isStatic) continue;
+
+      const gradientColors = (body as Matter.Body & { gradientColors?: { primary: string; secondary: string } }).gradientColors;
+      if (!gradientColors) continue;
+
+      const { primary, secondary } = gradientColors;
+      const bounds = body.bounds;
+      const centerX = (bounds.min.x + bounds.max.x) / 2;
+      const centerY = (bounds.min.y + bounds.max.y) / 2;
+      const radius = Math.max(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y) / 2;
+
+      // Create radial gradient from center
+      const gradient = ctx.createRadialGradient(
+        centerX - radius * 0.3,
+        centerY - radius * 0.3,
+        0,
+        centerX,
+        centerY,
+        radius * 1.2
+      );
+      gradient.addColorStop(0, secondary);
+      gradient.addColorStop(0.7, primary);
+      gradient.addColorStop(1, this.darkenColor(primary, 30));
+
+      // Draw the shape with gradient
+      ctx.save();
+      ctx.beginPath();
+      const vertices = body.vertices;
+      if (vertices.length === 0) {
+        ctx.restore();
+        continue;
+      }
+      ctx.moveTo(vertices[0]!.x, vertices[0]!.y);
+      for (let i = 1; i < vertices.length; i++) {
+        ctx.lineTo(vertices[i]!.x, vertices[i]!.y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      // Add subtle border
+      ctx.strokeStyle = this.darkenColor(primary, 40);
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  private darkenColor(hex: string, percent: number): string {
+    const num = parseInt(hex.replace("#", ""), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.max((num >> 16) - amt, 0);
+    const G = Math.max(((num >> 8) & 0x00ff) - amt, 0);
+    const B = Math.max((num & 0x0000ff) - amt, 0);
+    return `#${((1 << 24) | (R << 16) | (G << 8) | B).toString(16).slice(1)}`;
   }
 
   dropShape(): void {
