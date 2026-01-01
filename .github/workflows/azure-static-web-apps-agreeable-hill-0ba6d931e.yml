@@ -23,6 +23,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: npm ci
+        run: npm ci
       - name: Build for static deployment
         run: npm run build
       - name: Build And Deploy
@@ -51,6 +53,7 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AGREEABLE_HILL_0BA6D931E }}
           action: "close"
+
 
 
 
