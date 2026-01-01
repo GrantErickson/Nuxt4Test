@@ -15,6 +15,7 @@ export class PhysicsGame {
   private readonly shapeTracker: ShapeTracker;
 
   private dropInterval: ReturnType<typeof setInterval> | null = null;
+  private waterInterval: ReturnType<typeof setInterval> | null = null;
   private removeInterval: ReturnType<typeof setInterval> | null = null;
   private elapsedInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -81,6 +82,9 @@ export class PhysicsGame {
     // Start dropping shapes
     this.startDropping();
 
+    // Start dropping water
+    this.startWaterDropping();
+
     // Check for expired shapes every 500ms
     this.removeInterval = setInterval(() => this.removeExpiredShapes(), 500);
 
@@ -144,6 +148,13 @@ export class PhysicsGame {
     for (const body of bodies) {
       if (body.isStatic) continue;
 
+      // Check if this is a water droplet
+      const isWater = (body as Matter.Body & { isWater?: boolean }).isWater;
+      if (isWater) {
+        this.renderWaterDroplet(ctx, body);
+        continue;
+      }
+
       const gradientColors = (
         body as Matter.Body & {
           gradientColors?: { primary: string; secondary: string };
@@ -204,6 +215,40 @@ export class PhysicsGame {
     return `#${((1 << 24) | (R << 16) | (G << 8) | B).toString(16).slice(1)}`;
   }
 
+  private renderWaterDroplet(ctx: CanvasRenderingContext2D, body: Matter.Body): void {
+    const bounds = body.bounds;
+    const centerX = (bounds.min.x + bounds.max.x) / 2;
+    const centerY = (bounds.min.y + bounds.max.y) / 2;
+    const radius = (bounds.max.x - bounds.min.x) / 2;
+
+    // Create water gradient (light blue to deep blue)
+    const gradient = ctx.createRadialGradient(
+      centerX - radius * 0.3,
+      centerY - radius * 0.3,
+      0,
+      centerX,
+      centerY,
+      radius * 1.2
+    );
+    gradient.addColorStop(0, "#b3e5fc");
+    gradient.addColorStop(0.4, "#4fc3f7");
+    gradient.addColorStop(0.8, "#0288d1");
+    gradient.addColorStop(1, "#01579b");
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    // Add subtle highlight
+    ctx.beginPath();
+    ctx.arc(centerX - radius * 0.2, centerY - radius * 0.2, radius * 0.3, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+    ctx.fill();
+    ctx.restore();
+  }
+
   dropShape(): void {
     if (!this.world || this._isPaused) return;
 
@@ -218,6 +263,44 @@ export class PhysicsGame {
     Matter.Composite.add(this.world, shape);
     this.shapeTracker.add(shape);
     this.notifyStateChange();
+  }
+
+  private dropWater(): void {
+    if (!this.world || this._isPaused) return;
+
+    const { canvasWidth, wallThickness } = this.config;
+
+    // Drop multiple water particles at once
+    const dropCount = 3 + Math.floor(Math.random() * 4);
+
+    for (let i = 0; i < dropCount; i++) {
+      const x =
+        wallThickness +
+        10 +
+        Math.random() * (canvasWidth - wallThickness * 2 - 20);
+      const y = -10 - Math.random() * 30;
+
+      // Small water droplet
+      const radius = 3 + Math.random() * 4;
+      const water = Matter.Bodies.circle(x, y, radius, {
+        restitution: 0.1,
+        friction: 0.01,
+        frictionAir: 0.001,
+        density: 0.001,
+        render: { fillStyle: "transparent" },
+      });
+
+      // Mark as water for custom rendering
+      (water as Matter.Body & { isWater?: boolean }).isWater = true;
+
+      Matter.Composite.add(this.world, water);
+      this.shapeTracker.add(water);
+    }
+  }
+
+  private startWaterDropping(): void {
+    if (this.waterInterval) clearInterval(this.waterInterval);
+    this.waterInterval = setInterval(() => this.dropWater(), 200);
   }
 
   private removeExpiredShapes(): void {
@@ -271,11 +354,13 @@ export class PhysicsGame {
     if (this._isPaused) {
       if (this.runner) Matter.Runner.stop(this.runner);
       if (this.dropInterval) clearInterval(this.dropInterval);
+      if (this.waterInterval) clearInterval(this.waterInterval);
     } else {
       if (this.runner && this.engine) {
         Matter.Runner.run(this.runner, this.engine);
       }
       this.startDropping();
+      this.startWaterDropping();
     }
 
     this.notifyStateChange();
@@ -299,11 +384,13 @@ export class PhysicsGame {
       Matter.Runner.run(this.runner, this.engine);
     }
     this.startDropping();
+    this.startWaterDropping();
     this.notifyStateChange();
   }
 
   cleanup(): void {
     if (this.dropInterval) clearInterval(this.dropInterval);
+    if (this.waterInterval) clearInterval(this.waterInterval);
     if (this.removeInterval) clearInterval(this.removeInterval);
     if (this.elapsedInterval) clearInterval(this.elapsedInterval);
 
