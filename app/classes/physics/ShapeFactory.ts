@@ -6,6 +6,8 @@ export interface GradientInfo {
   secondary: string;
 }
 
+type BodyWithGradient = Matter.Body & { gradientColors?: GradientInfo };
+
 export class ShapeFactory {
   private readonly minSize: number;
   private readonly maxSize: number;
@@ -43,7 +45,8 @@ export class ShapeFactory {
           }
         );
         break;
-      case 2: // Polygon (pentagon/hexagon/heptagon)
+      case 2: {
+        // Polygon (pentagon/hexagon/heptagon)
         const sides = 5 + Math.floor(Math.random() * 3);
         body = Matter.Bodies.polygon(x, y, sides, size / 2, {
           restitution: 0.3,
@@ -51,6 +54,7 @@ export class ShapeFactory {
           render: { fillStyle: "transparent" },
         });
         break;
+      }
       default: // Triangle
         body = Matter.Bodies.polygon(x, y, 3, size / 2, {
           restitution: 0.3,
@@ -60,7 +64,7 @@ export class ShapeFactory {
     }
 
     // Store gradient colors in the body's plugin data
-    (body as any).gradientColors = gradient;
+    (body as BodyWithGradient).gradientColors = gradient;
 
     // Add slight random rotation
     Matter.Body.setAngle(body, Math.random() * Math.PI * 2);

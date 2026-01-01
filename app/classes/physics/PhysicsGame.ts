@@ -144,14 +144,19 @@ export class PhysicsGame {
     for (const body of bodies) {
       if (body.isStatic) continue;
 
-      const gradientColors = (body as Matter.Body & { gradientColors?: { primary: string; secondary: string } }).gradientColors;
+      const gradientColors = (
+        body as Matter.Body & {
+          gradientColors?: { primary: string; secondary: string };
+        }
+      ).gradientColors;
       if (!gradientColors) continue;
 
       const { primary, secondary } = gradientColors;
       const bounds = body.bounds;
       const centerX = (bounds.min.x + bounds.max.x) / 2;
       const centerY = (bounds.min.y + bounds.max.y) / 2;
-      const radius = Math.max(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y) / 2;
+      const radius =
+        Math.max(bounds.max.x - bounds.min.x, bounds.max.y - bounds.min.y) / 2;
 
       // Create radial gradient from center
       const gradient = ctx.createRadialGradient(
