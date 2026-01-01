@@ -338,7 +338,9 @@ export class PhysicsGame {
     // Start animation loop if we have shapes to shrink and it's not running
     if (this.shrinkingShapes.size > 0 && this.shrinkAnimationId === null) {
       this.lastShrinkTime = performance.now();
-      this.shrinkAnimationId = requestAnimationFrame((t) => this.animateShrinking(t));
+      this.shrinkAnimationId = requestAnimationFrame((t) =>
+        this.animateShrinking(t)
+      );
     }
 
     if (expired.length > 0) {
@@ -383,7 +385,9 @@ export class PhysicsGame {
 
     // Continue animation if there are still shapes to shrink
     if (this.shrinkingShapes.size > 0) {
-      this.shrinkAnimationId = requestAnimationFrame((t) => this.animateShrinking(t));
+      this.shrinkAnimationId = requestAnimationFrame((t) =>
+        this.animateShrinking(t)
+      );
     } else {
       this.shrinkAnimationId = null;
     }
@@ -465,7 +469,8 @@ export class PhysicsGame {
     if (this.waterInterval) clearInterval(this.waterInterval);
     if (this.removeInterval) clearInterval(this.removeInterval);
     if (this.elapsedInterval) clearInterval(this.elapsedInterval);
-    if (this.shrinkAnimationId !== null) cancelAnimationFrame(this.shrinkAnimationId);
+    if (this.shrinkAnimationId !== null)
+      cancelAnimationFrame(this.shrinkAnimationId);
 
     if (this.render) {
       Matter.Render.stop(this.render);
