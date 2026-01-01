@@ -18,7 +18,8 @@ export class PhysicsGame {
   private waterInterval: ReturnType<typeof setInterval> | null = null;
   private removeInterval: ReturnType<typeof setInterval> | null = null;
   private elapsedInterval: ReturnType<typeof setInterval> | null = null;
-  private shrinkInterval: ReturnType<typeof setInterval> | null = null;
+  private shrinkAnimationId: number | null = null;
+  private lastShrinkTime = 0;
 
   // Track shapes that are currently shrinking
   private shrinkingShapes: Map<Matter.Body, number> = new Map();
@@ -92,9 +93,6 @@ export class PhysicsGame {
 
     // Check for expired shapes every 500ms
     this.removeInterval = setInterval(() => this.removeExpiredShapes(), 500);
-
-    // Run shrinking animation at 60fps
-    this.shrinkInterval = setInterval(() => this.animateShrinking(), 16);
 
     // Track elapsed time
     this.elapsedInterval = setInterval(() => {
@@ -337,16 +335,28 @@ export class PhysicsGame {
       }
     }
 
+    // Start animation loop if we have shapes to shrink and it's not running
+    if (this.shrinkingShapes.size > 0 && this.shrinkAnimationId === null) {
+      this.lastShrinkTime = performance.now();
+      this.shrinkAnimationId = requestAnimationFrame((t) => this.animateShrinking(t));
+    }
+
     if (expired.length > 0) {
       this.notifyStateChange();
     }
   }
 
-  private animateShrinking(): void {
-    if (!this.world || this._isPaused) return;
+  private animateShrinking(timestamp: number): void {
+    if (!this.world || this._isPaused || this.shrinkingShapes.size === 0) {
+      this.shrinkAnimationId = null;
+      return;
+    }
 
-    const shrinkRate = 0.05; // How fast to shrink per frame
-    const minScale = 0.1; // Minimum scale before removal
+    // Time-based shrinking for consistent speed regardless of frame rate
+    const deltaTime = timestamp - this.lastShrinkTime;
+    this.lastShrinkTime = timestamp;
+    const shrinkRate = 0.003 * deltaTime; // Scale per ms
+    const minScale = 0.1;
 
     const toRemove: Matter.Body[] = [];
 
@@ -354,17 +364,14 @@ export class PhysicsGame {
       const newScale = currentScale - shrinkRate;
 
       if (newScale <= minScale) {
-        // Shape is small enough, remove it
         toRemove.push(body);
       } else {
-        // Shrink the shape
         const scaleFactor = newScale / currentScale;
         Matter.Body.scale(body, scaleFactor, scaleFactor);
         this.shrinkingShapes.set(body, newScale);
       }
     }
 
-    // Remove fully shrunk shapes
     for (const body of toRemove) {
       this.shrinkingShapes.delete(body);
       Matter.Composite.remove(this.world, body);
@@ -372,6 +379,13 @@ export class PhysicsGame {
 
     if (toRemove.length > 0) {
       this.notifyStateChange();
+    }
+
+    // Continue animation if there are still shapes to shrink
+    if (this.shrinkingShapes.size > 0) {
+      this.shrinkAnimationId = requestAnimationFrame((t) => this.animateShrinking(t));
+    } else {
+      this.shrinkAnimationId = null;
     }
   }
 
@@ -451,7 +465,7 @@ export class PhysicsGame {
     if (this.waterInterval) clearInterval(this.waterInterval);
     if (this.removeInterval) clearInterval(this.removeInterval);
     if (this.elapsedInterval) clearInterval(this.elapsedInterval);
-    if (this.shrinkInterval) clearInterval(this.shrinkInterval);
+    if (this.shrinkAnimationId !== null) cancelAnimationFrame(this.shrinkAnimationId);
 
     if (this.render) {
       Matter.Render.stop(this.render);
