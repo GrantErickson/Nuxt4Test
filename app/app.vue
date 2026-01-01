@@ -9,6 +9,7 @@
           <v-tab value="mastermind" to="/mastermind">🎯 Mastermind</v-tab>
           <v-tab value="thermalhunt" to="/thermalhunt">🌡️ Thermal Hunt</v-tab>
           <v-tab value="cavern" to="/cavern">🏔️ Cavern</v-tab>
+          <v-tab value="physics" to="/physics">🎱 Physics</v-tab>
         </v-tabs>
         <NuxtPage />
       </v-container>

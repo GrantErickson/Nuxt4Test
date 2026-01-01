@@ -12,9 +12,13 @@
   "dependencies": {
     "@nuxt/eslint": "^1.12.1",
     "eslint": "^9.39.2",
+    "matter-js": "^0.20.0",
     "nuxt": "^4.2.2",
     "vue": "^3.5.26",
     "vue-router": "^4.6.4",
     "vuetify-nuxt-module": "^0.19.1"
+  },
+  "devDependencies": {
+    "@types/matter-js": "^0.20.2"
   }
 }
