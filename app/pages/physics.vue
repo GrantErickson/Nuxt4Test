@@ -81,6 +81,25 @@
         <span class="text-caption">{{ shapeLifetime }}s</span>
       </div>
 
+      <!-- Bounciness setting -->
+      <div class="d-flex justify-center ga-4 mt-4 flex-wrap align-center">
+        <span class="text-caption">Bounciness:</span>
+        <v-slider
+          v-model="bounciness"
+          :min="0"
+          :max="1"
+          :step="0.1"
+          thumb-label
+          hide-details
+          density="compact"
+          color="orange"
+          style="max-width: 200px"
+        >
+          <template #thumb-label="{ modelValue }"> {{ modelValue }} </template>
+        </v-slider>
+        <span class="text-caption">{{ bounciness.toFixed(1) }}</span>
+      </div>
+
       <div class="text-center text-caption text-grey-darken-1 mt-4">
         Shapes fall and pile up. Each shape vanishes after
         {{ shapeLifetime }} seconds!
@@ -117,6 +136,7 @@ const isPaused = computed(() => {
 // User-configurable settings
 const dropRate = ref<DropRate>("medium");
 const shapeLifetime = ref(15);
+const bounciness = ref(0.3);
 
 function handleCanvasClick(event: MouseEvent): void {
   if (!canvasEl.value || !game) return;
@@ -150,6 +170,12 @@ watch(dropRate, (newRate) => {
 watch(shapeLifetime, (newLifetime) => {
   if (game) {
     game.shapeLifetimeSeconds = newLifetime;
+  }
+});
+
+watch(bounciness, (newBounciness) => {
+  if (game) {
+    game.bounciness = newBounciness;
   }
 });
 

@@ -18,11 +18,16 @@ export class PhysicsGame {
   private waterInterval: ReturnType<typeof setInterval> | null = null;
   private removeInterval: ReturnType<typeof setInterval> | null = null;
   private elapsedInterval: ReturnType<typeof setInterval> | null = null;
+  private shrinkInterval: ReturnType<typeof setInterval> | null = null;
+
+  // Track shapes that are currently shrinking
+  private shrinkingShapes: Map<Matter.Body, number> = new Map();
 
   private _elapsed = 0;
   private _isPaused = false;
   private _dropRate: DropRate = "medium";
   private _shapeLifetimeSeconds = 15;
+  private _bounciness = 0.3;
 
   private readonly config: PhysicsConfig;
 
@@ -87,6 +92,9 @@ export class PhysicsGame {
 
     // Check for expired shapes every 500ms
     this.removeInterval = setInterval(() => this.removeExpiredShapes(), 500);
+
+    // Run shrinking animation at 60fps
+    this.shrinkInterval = setInterval(() => this.animateShrinking(), 16);
 
     // Track elapsed time
     this.elapsedInterval = setInterval(() => {
@@ -215,7 +223,10 @@ export class PhysicsGame {
     return `#${((1 << 24) | (R << 16) | (G << 8) | B).toString(16).slice(1)}`;
   }
 
-  private renderWaterDroplet(ctx: CanvasRenderingContext2D, body: Matter.Body): void {
+  private renderWaterDroplet(
+    ctx: CanvasRenderingContext2D,
+    body: Matter.Body
+  ): void {
     const bounds = body.bounds;
     const centerX = (bounds.min.x + bounds.max.x) / 2;
     const centerY = (bounds.min.y + bounds.max.y) / 2;
@@ -243,7 +254,13 @@ export class PhysicsGame {
 
     // Add subtle highlight
     ctx.beginPath();
-    ctx.arc(centerX - radius * 0.2, centerY - radius * 0.2, radius * 0.3, 0, Math.PI * 2);
+    ctx.arc(
+      centerX - radius * 0.2,
+      centerY - radius * 0.2,
+      radius * 0.3,
+      0,
+      Math.PI * 2
+    );
     ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
     ctx.fill();
     ctx.restore();
@@ -309,11 +326,51 @@ export class PhysicsGame {
     const lifetimeMs = this._shapeLifetimeSeconds * 1000;
     const expired = this.shapeTracker.getExpired(lifetimeMs);
 
+    // Start shrinking animation for expired shapes (water disappears instantly)
     for (const body of expired) {
-      Matter.Composite.remove(this.world, body);
+      const isWater = (body as Matter.Body & { isWater?: boolean }).isWater;
+      if (isWater) {
+        // Water disappears instantly
+        Matter.Composite.remove(this.world, body);
+      } else if (!this.shrinkingShapes.has(body)) {
+        this.shrinkingShapes.set(body, 1.0); // Start at scale 1.0
+      }
     }
 
     if (expired.length > 0) {
+      this.notifyStateChange();
+    }
+  }
+
+  private animateShrinking(): void {
+    if (!this.world || this._isPaused) return;
+
+    const shrinkRate = 0.05; // How fast to shrink per frame
+    const minScale = 0.1; // Minimum scale before removal
+
+    const toRemove: Matter.Body[] = [];
+
+    for (const [body, currentScale] of this.shrinkingShapes) {
+      const newScale = currentScale - shrinkRate;
+
+      if (newScale <= minScale) {
+        // Shape is small enough, remove it
+        toRemove.push(body);
+      } else {
+        // Shrink the shape
+        const scaleFactor = newScale / currentScale;
+        Matter.Body.scale(body, scaleFactor, scaleFactor);
+        this.shrinkingShapes.set(body, newScale);
+      }
+    }
+
+    // Remove fully shrunk shapes
+    for (const body of toRemove) {
+      this.shrinkingShapes.delete(body);
+      Matter.Composite.remove(this.world, body);
+    }
+
+    if (toRemove.length > 0) {
       this.notifyStateChange();
     }
   }
@@ -377,6 +434,7 @@ export class PhysicsGame {
     }
 
     this.shapeTracker.clear();
+    this.shrinkingShapes.clear();
     this._elapsed = 0;
     this._isPaused = false;
 
@@ -393,6 +451,7 @@ export class PhysicsGame {
     if (this.waterInterval) clearInterval(this.waterInterval);
     if (this.removeInterval) clearInterval(this.removeInterval);
     if (this.elapsedInterval) clearInterval(this.elapsedInterval);
+    if (this.shrinkInterval) clearInterval(this.shrinkInterval);
 
     if (this.render) {
       Matter.Render.stop(this.render);
@@ -423,6 +482,15 @@ export class PhysicsGame {
 
   get shapeLifetimeSeconds(): number {
     return this._shapeLifetimeSeconds;
+  }
+
+  set bounciness(value: number) {
+    this._bounciness = Math.max(0, Math.min(1, value));
+    this.shapeFactory.restitution = this._bounciness;
+  }
+
+  get bounciness(): number {
+    return this._bounciness;
   }
 
   // Getters for state

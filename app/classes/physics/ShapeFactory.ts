@@ -11,10 +11,20 @@ type BodyWithGradient = Matter.Body & { gradientColors?: GradientInfo };
 export class ShapeFactory {
   private readonly minSize: number;
   private readonly maxSize: number;
+  private _restitution: number;
 
-  constructor(minSize = 30, maxSize = 90) {
+  constructor(minSize = 30, maxSize = 90, restitution = 0.3) {
     this.minSize = minSize;
     this.maxSize = maxSize;
+    this._restitution = restitution;
+  }
+
+  set restitution(value: number) {
+    this._restitution = value;
+  }
+
+  get restitution(): number {
+    return this._restitution;
   }
 
   createRandomShape(x: number, y: number): Matter.Body {
@@ -27,7 +37,7 @@ export class ShapeFactory {
     switch (shapeType) {
       case 0: // Circle
         body = Matter.Bodies.circle(x, y, size / 2, {
-          restitution: 0.3,
+          restitution: this._restitution,
           friction: 0.5,
           render: { fillStyle: "transparent" },
         });
@@ -39,7 +49,7 @@ export class ShapeFactory {
           size,
           size * (0.5 + Math.random() * 0.5),
           {
-            restitution: 0.3,
+            restitution: this._restitution,
             friction: 0.5,
             render: { fillStyle: "transparent" },
           }
@@ -49,7 +59,7 @@ export class ShapeFactory {
         // Polygon (pentagon/hexagon/heptagon)
         const sides = 5 + Math.floor(Math.random() * 3);
         body = Matter.Bodies.polygon(x, y, sides, size / 2, {
-          restitution: 0.3,
+          restitution: this._restitution,
           friction: 0.5,
           render: { fillStyle: "transparent" },
         });
@@ -57,7 +67,7 @@ export class ShapeFactory {
       }
       default: // Triangle
         body = Matter.Bodies.polygon(x, y, 3, size / 2, {
-          restitution: 0.3,
+          restitution: this._restitution,
           friction: 0.5,
           render: { fillStyle: "transparent" },
         });
