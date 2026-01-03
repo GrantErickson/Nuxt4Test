@@ -11,7 +11,9 @@
         <v-chip color="amber-darken-2" variant="flat" size="small">
           🔥 {{ flagCount }}
         </v-chip>
-        <v-chip color="blue-grey" variant="flat" size="small"> ⏱️ {{ timer }}s </v-chip>
+        <v-chip color="blue-grey" variant="flat" size="small">
+          ⏱️ {{ timer }}s
+        </v-chip>
       </div>
     </v-card-title>
 
@@ -23,7 +25,10 @@
 
       <!-- Game board -->
       <div class="board-container">
-        <div class="game-board position-relative" :style="{ '--cols': boardSize }">
+        <div
+          class="game-board position-relative"
+          :style="{ '--cols': boardSize }"
+        >
           <!-- Game status overlay -->
           <v-alert
             v-if="gameOver"
@@ -31,9 +36,7 @@
             class="game-over-overlay"
             :icon="false"
           >
-            <template v-if="won">
-              🎉 Campsite secured! ⛺
-            </template>
+            <template v-if="won"> 🎉 Campsite secured! ⛺ </template>
             <template v-else> 🐻💥 Bear attack! 🌲 </template>
           </v-alert>
 
