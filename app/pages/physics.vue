@@ -5,10 +5,10 @@
     >
       <span>🎱 Physics Playground</span>
       <div class="d-flex align-center ga-2 flex-wrap">
-        <v-chip color="purple-darken-1" variant="flat">
-          📦 {{ shapeCount }} shapes
+        <v-chip color="purple-darken-1" variant="flat" size="small">
+          📦 {{ shapeCount }}
         </v-chip>
-        <v-chip color="blue-darken-1" variant="flat">
+        <v-chip color="blue-darken-1" variant="flat" size="small">
           ⏱️ {{ Math.floor(elapsed) }}s
         </v-chip>
       </div>
@@ -23,10 +23,11 @@
       </div>
 
       <!-- Controls -->
-      <div class="d-flex justify-center ga-4 mt-4 flex-wrap">
+      <div class="d-flex justify-center ga-2 mt-4 flex-wrap">
         <v-btn
           color="purple-darken-2"
           prepend-icon="mdi-refresh"
+          size="small"
           @click="resetSimulation"
         >
           Reset
@@ -34,6 +35,7 @@
         <v-btn
           :color="isPaused ? 'success' : 'warning'"
           :prepend-icon="isPaused ? 'mdi-play' : 'mdi-pause'"
+          size="small"
           @click="togglePause"
         >
           {{ isPaused ? "Play" : "Pause" }}
@@ -41,30 +43,31 @@
         <v-btn
           color="blue-darken-2"
           prepend-icon="mdi-shape"
+          size="small"
           @click="dropShape"
         >
-          Drop Shape
+          Drop
         </v-btn>
       </div>
 
       <!-- Settings -->
-      <div class="d-flex justify-center ga-4 mt-4 flex-wrap align-center">
-        <span class="text-caption">Drop Rate:</span>
+      <div class="d-flex justify-center ga-2 mt-4 flex-wrap align-center">
+        <span class="text-caption">Rate:</span>
         <v-btn-toggle
           v-model="dropRate"
           mandatory
           color="purple"
           density="compact"
         >
-          <v-btn value="slow" size="small">Slow</v-btn>
-          <v-btn value="medium" size="small">Medium</v-btn>
-          <v-btn value="fast" size="small">Fast</v-btn>
+          <v-btn value="slow" size="x-small">Slow</v-btn>
+          <v-btn value="medium" size="x-small">Med</v-btn>
+          <v-btn value="fast" size="x-small">Fast</v-btn>
         </v-btn-toggle>
       </div>
 
       <!-- Lifetime setting -->
-      <div class="d-flex justify-center ga-4 mt-4 flex-wrap align-center">
-        <span class="text-caption">Shape Lifetime:</span>
+      <div class="d-flex justify-center ga-2 mt-4 flex-wrap align-center slider-row">
+        <span class="text-caption">Life:</span>
         <v-slider
           v-model="shapeLifetime"
           :min="5"
@@ -74,7 +77,7 @@
           hide-details
           density="compact"
           color="purple"
-          style="max-width: 200px"
+          class="slider-control"
         >
           <template #thumb-label="{ modelValue }"> {{ modelValue }}s </template>
         </v-slider>
@@ -82,8 +85,8 @@
       </div>
 
       <!-- Bounciness setting -->
-      <div class="d-flex justify-center ga-4 mt-4 flex-wrap align-center">
-        <span class="text-caption">Bounciness:</span>
+      <div class="d-flex justify-center ga-2 mt-4 flex-wrap align-center slider-row">
+        <span class="text-caption">Bounce:</span>
         <v-slider
           v-model="bounciness"
           :min="0"
@@ -93,7 +96,7 @@
           hide-details
           density="compact"
           color="orange"
-          style="max-width: 200px"
+          class="slider-control"
         >
           <template #thumb-label="{ modelValue }"> {{ modelValue }} </template>
         </v-slider>
@@ -183,9 +186,15 @@ onMounted(() => {
   nextTick(() => {
     if (!canvasEl.value || !canvasContainer.value) return;
 
+    // Calculate canvas size based on container width (max 500px)
+    const containerWidth = Math.min(canvasContainer.value.clientWidth, 500);
+    const canvasHeight = Math.round(containerWidth * 1.5); // 2:3 aspect ratio (taller)
+
     game = new PhysicsGame({
       shapeLifetimeSeconds: shapeLifetime.value,
       dropRate: dropRate.value,
+      canvasWidth: containerWidth,
+      canvasHeight: canvasHeight,
     });
 
     // Set up state change callback to trigger Vue reactivity
@@ -218,9 +227,24 @@ onUnmounted(() => {
   border-radius: 8px;
   overflow: hidden;
   background: #1a1a2e;
+  width: 100%;
+  max-width: 500px;
 }
 
 canvas {
   display: block;
+  width: 100%;
+  height: auto;
+}
+
+.slider-row {
+  width: 100%;
+  max-width: 350px;
+}
+
+.slider-control {
+  flex: 1;
+  min-width: 100px;
+  max-width: 180px;
 }
 </style>
