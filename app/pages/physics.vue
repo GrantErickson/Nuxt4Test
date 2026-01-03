@@ -66,7 +66,9 @@
       </div>
 
       <!-- Lifetime setting -->
-      <div class="d-flex justify-center ga-2 mt-4 flex-wrap align-center slider-row">
+      <div
+        class="d-flex justify-center ga-2 mt-4 flex-wrap align-center slider-row"
+      >
         <span class="text-caption">Life:</span>
         <v-slider
           v-model="shapeLifetime"
@@ -85,7 +87,9 @@
       </div>
 
       <!-- Bounciness setting -->
-      <div class="d-flex justify-center ga-2 mt-4 flex-wrap align-center slider-row">
+      <div
+        class="d-flex justify-center ga-2 mt-4 flex-wrap align-center slider-row"
+      >
         <span class="text-caption">Bounce:</span>
         <v-slider
           v-model="bounciness"
