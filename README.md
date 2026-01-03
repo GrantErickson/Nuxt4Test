@@ -2,13 +2,18 @@
 
 This started as a test for the 2026 EWU CSCD 379 class using the latest versions of Nuxt and Vuetify. 
 
+[Check it out here](https://agreeable-hill-0ba6d931e.2.azurestaticapps.net)
+
 Here are the initial steps
 1. Created the project using the Nuxt command-line tools.
 2. Added Vuetify manually to the project.
 3. Removed the base page and created a little demo with buttons to increment a number.
 Everything worked great.
 
-## Then Claud Opus 4.5 Happened
+## Enter AI
+
+Then Claude Opus 4.5 started helping
+
 So I started messing around to see if Opus 4.5 could build Wordle. It did a good, albeit simple, game to start, and even created new tabs and routes for it. However, after another four prompts, I had a game with a keyboard displaying the current results. 
 
 Then I asked for Minesweeper, and my son wanted to do a camping-themed version. AI named it Bear Patrol. Not my name. He had good ideas, like clicking on a number should reveal the other cells if that number of flags are already placed. And clicking on a number when there are only that many unrevealed spaces adjacent should flag them. 
