@@ -1,17 +1,17 @@
 <template>
   <v-card class="mx-auto wilderness-card" max-width="750">
     <v-card-title
-      class="bg-green-darken-4 text-white d-flex align-center justify-space-between"
+      class="bg-green-darken-4 text-white d-flex align-center justify-space-between flex-wrap ga-2"
     >
-      <span>🏕️ Wilderness Bear Patrol 🌲</span>
-      <div class="d-flex align-center ga-4">
-        <v-chip color="brown-darken-1" variant="flat">
-          🐻 {{ mineCount - flagCount }} bears
+      <span>🏕️ Bear Patrol 🌲</span>
+      <div class="d-flex align-center ga-2 flex-wrap">
+        <v-chip color="brown-darken-1" variant="flat" size="small">
+          🐻 {{ mineCount - flagCount }}
         </v-chip>
-        <v-chip color="amber-darken-2" variant="flat">
-          🔥 {{ flagCount }} campfires
+        <v-chip color="amber-darken-2" variant="flat" size="small">
+          🔥 {{ flagCount }}
         </v-chip>
-        <v-chip color="blue-grey" variant="flat"> ⏱️ {{ timer }}s </v-chip>
+        <v-chip color="blue-grey" variant="flat" size="small"> ⏱️ {{ timer }}s </v-chip>
       </div>
     </v-card-title>
 
@@ -22,31 +22,36 @@
       </div>
 
       <!-- Game board -->
-      <div class="d-flex flex-column align-center position-relative">
-        <!-- Game status overlay -->
-        <v-alert
-          v-if="gameOver"
-          :type="won ? 'success' : 'error'"
-          class="game-over-overlay"
-          :icon="false"
-        >
-          <template v-if="won">
-            🎉🏕️ You safely navigated the wilderness! The campsite is secure! ⛺
-          </template>
-          <template v-else> 🐻💥 You wandered into a bear's den! 🌲 </template>
-        </v-alert>
-
-        <div v-for="row in boardSize" :key="'row-' + row" class="d-flex">
-          <div
-            v-for="col in boardSize"
-            :key="'cell-' + row + '-' + col"
-            class="cell d-flex align-center justify-center"
-            :class="getCellClass(row - 1, col - 1)"
-            @click="revealCell(row - 1, col - 1)"
-            @contextmenu.prevent="toggleFlag(row - 1, col - 1)"
+      <div class="board-container">
+        <div class="game-board position-relative" :style="{ '--cols': boardSize }">
+          <!-- Game status overlay -->
+          <v-alert
+            v-if="gameOver"
+            :type="won ? 'success' : 'error'"
+            class="game-over-overlay"
+            :icon="false"
           >
-            {{ getCellContent(row - 1, col - 1) }}
-          </div>
+            <template v-if="won">
+              🎉 Campsite secured! ⛺
+            </template>
+            <template v-else> 🐻💥 Bear attack! 🌲 </template>
+          </v-alert>
+
+          <template v-for="row in boardSize" :key="'row-' + row">
+            <div
+              v-for="col in boardSize"
+              :key="'cell-' + row + '-' + col"
+              class="cell d-flex align-center justify-center"
+              :class="getCellClass(row - 1, col - 1)"
+              @click="revealCell(row - 1, col - 1)"
+              @contextmenu.prevent="toggleFlag(row - 1, col - 1)"
+              @touchstart.passive="handleTouchStart(row - 1, col - 1, $event)"
+              @touchend="handleTouchEnd"
+              @touchmove.passive="handleTouchMove"
+            >
+              {{ getCellContent(row - 1, col - 1) }}
+            </div>
+          </template>
         </div>
       </div>
 
@@ -54,24 +59,27 @@
       <div class="text-center mt-2 wilderness-footer">🌿🍂🌿🍃🌿🍂🌿</div>
 
       <!-- Controls -->
-      <div class="d-flex justify-center ga-4 mt-4">
+      <div class="d-flex justify-center ga-2 mt-4 flex-wrap">
         <v-btn
           color="green-darken-3"
           prepend-icon="mdi-tent"
+          size="small"
           @click="resetGame"
         >
-          New Expedition
+          New Game
         </v-btn>
         <v-btn
           :color="flagMode ? 'orange-darken-2' : 'grey'"
           :variant="flagMode ? 'flat' : 'outlined'"
+          size="small"
           @click="toggleFlagMode"
         >
-          🔥 Campfire Mode {{ flagMode ? "ON" : "OFF" }}
+          🔥 Flag {{ flagMode ? "ON" : "OFF" }}
         </v-btn>
         <v-btn
           color="blue-darken-1"
           variant="flat"
+          size="small"
           :disabled="gameOver || !hasUnrevealedOpenArea()"
           @click="revealLargestOpenArea"
         >
@@ -81,8 +89,7 @@
 
       <!-- Instructions -->
       <div class="text-center text-caption text-brown-darken-2 mt-4">
-        🧭 Left-click to explore. Right-click (or use Campfire Mode) to mark
-        bear dens with campfires to scare them away!
+        🧭 Tap to explore. Long-press to mark bear dens with campfires!
       </div>
     </v-card-text>
 
@@ -134,6 +141,57 @@ gameInstance.setTimerCallback(() => {
 // Trigger to force template re-render
 const boardVersion = ref(0);
 
+// Touch handling for press-and-hold flagging
+let touchTimer: ReturnType<typeof setTimeout> | null = null;
+let touchStartPos: { x: number; y: number } | null = null;
+let longPressTriggered = false;
+const LONG_PRESS_DURATION = 400; // ms
+const TOUCH_MOVE_THRESHOLD = 10; // pixels
+
+function handleTouchStart(row: number, col: number, event: TouchEvent): void {
+  longPressTriggered = false;
+  const touch = event.touches[0];
+  if (touch) {
+    touchStartPos = { x: touch.clientX, y: touch.clientY };
+  }
+
+  touchTimer = setTimeout(() => {
+    longPressTriggered = true;
+    toggleFlag(row, col);
+    // Vibrate if available for haptic feedback
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+  }, LONG_PRESS_DURATION);
+}
+
+function handleTouchEnd(event: TouchEvent): void {
+  if (touchTimer) {
+    clearTimeout(touchTimer);
+    touchTimer = null;
+  }
+  // Prevent click from firing after long press
+  if (longPressTriggered) {
+    event.preventDefault();
+  }
+  touchStartPos = null;
+}
+
+function handleTouchMove(event: TouchEvent): void {
+  // Cancel long press if finger moves too much
+  if (touchTimer && touchStartPos) {
+    const touch = event.touches[0];
+    if (touch) {
+      const dx = Math.abs(touch.clientX - touchStartPos.x);
+      const dy = Math.abs(touch.clientY - touchStartPos.y);
+      if (dx > TOUCH_MOVE_THRESHOLD || dy > TOUCH_MOVE_THRESHOLD) {
+        clearTimeout(touchTimer);
+        touchTimer = null;
+      }
+    }
+  }
+}
+
 // Sync state from game instance
 function syncState(): void {
   const state = gameInstance.getState();
@@ -146,6 +204,11 @@ function syncState(): void {
 }
 
 function revealCell(row: number, col: number): void {
+  // Don't reveal if long press just triggered a flag
+  if (longPressTriggered) {
+    longPressTriggered = false;
+    return;
+  }
   gameInstance.handleCellClick(row, col);
   syncState();
 }
@@ -241,14 +304,31 @@ onUnmounted(() => {
   }
 }
 
+.board-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.game-board {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  gap: 1px;
+  width: 100%;
+  max-width: min(100%, calc(var(--cols) * 32px));
+  aspect-ratio: 1;
+}
+
 .cell {
-  width: 32px;
-  height: 32px;
+  aspect-ratio: 1;
   border: 1px solid #33691e;
-  font-size: 14px;
+  font-size: clamp(10px, 2.5vw, 14px);
   font-weight: bold;
   cursor: pointer;
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
   transition: all 0.15s ease;
   border-radius: 2px;
 }
