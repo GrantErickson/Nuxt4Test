@@ -6,4 +6,12 @@ export default defineNuxtConfig({
   vuetify: {
     /* module options */
   },
+  nitro: {
+    devProxy: {
+      "/api/": {
+        target: "http://localhost:5054/",
+        changeOrigin: true,
+      },
+    },
+  },
 });

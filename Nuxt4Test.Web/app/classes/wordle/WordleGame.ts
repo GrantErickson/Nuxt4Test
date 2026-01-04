@@ -75,15 +75,24 @@ export class WordleGame {
 
   /**
    * Reset the game to initial state with a new target word
+   * @param targetWord Optional target word to use instead of random
    */
-  reset(): void {
-    this._targetWord = this.wordList.getRandomWord();
+  reset(targetWord?: string): void {
+    this._targetWord = targetWord || this.wordList.getRandomWord();
     this._currentGuess = "";
     this._guesses = [];
     this._gameOver = false;
     this._won = false;
     this._errorMessage = "";
     this.keyboardState.reset();
+    this.letterEvaluator = new LetterEvaluator(this._targetWord);
+  }
+
+  /**
+   * Set a specific target word (used for word of the day)
+   */
+  setTargetWord(word: string): void {
+    this._targetWord = word.toLowerCase();
     this.letterEvaluator = new LetterEvaluator(this._targetWord);
   }
 

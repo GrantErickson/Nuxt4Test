@@ -1,12 +1,59 @@
 <template>
   <v-card class="mx-auto" max-width="600">
-    <v-card-title class="bg-green-darken-3 text-white">
-      🟩 Wordle Game
+    <v-card-title class="bg-green-darken-3 text-white d-flex align-center justify-space-between">
+      <span>🟩 Wordle</span>
+      <v-chip
+        :color="gameMode === 'daily' ? 'yellow-darken-2' : 'blue-grey'"
+        size="small"
+        variant="flat"
+      >
+        {{ gameMode === 'daily' ? '📅 Daily' : '🎲 Random' }}
+      </v-chip>
     </v-card-title>
 
+    <!-- Game Mode Selector -->
+    <v-card-text class="bg-grey-lighten-4 py-3">
+      <v-btn-toggle
+        v-model="gameMode"
+        mandatory
+        color="green-darken-3"
+        density="compact"
+        class="d-flex"
+        @update:model-value="onGameModeChange"
+      >
+        <v-btn value="daily" class="flex-grow-1">
+          <v-icon start>mdi-calendar-today</v-icon>
+          Word of the Day
+        </v-btn>
+        <v-btn value="random" class="flex-grow-1">
+          <v-icon start>mdi-shuffle-variant</v-icon>
+          Random Word
+        </v-btn>
+      </v-btn-toggle>
+    </v-card-text>
+
     <v-card-text class="pa-6">
+      <!-- Loading state -->
+      <div v-if="isLoading" class="d-flex flex-column align-center pa-8">
+        <v-progress-circular indeterminate color="green-darken-3" size="64" />
+        <p class="mt-4 text-grey">{{ gameMode === 'daily' ? 'Loading word of the day...' : 'Getting random word...' }}</p>
+      </div>
+
+      <!-- API error message -->
+      <v-alert
+        v-if="apiError"
+        type="warning"
+        variant="tonal"
+        density="compact"
+        class="mb-4"
+        closable
+        @click:close="apiError = null"
+      >
+        {{ apiError }}
+      </v-alert>
+
       <!-- Guesses grid -->
-      <div class="d-flex flex-column align-center ga-2 mb-4">
+      <div v-if="!isLoading" class="d-flex flex-column align-center ga-2 mb-4">
         <!-- Submitted guesses -->
         <div
           v-for="(guess, guessIndex) in guesses"
@@ -64,7 +111,7 @@
 
       <!-- Submit button -->
       <v-btn
-        v-if="!gameOver"
+        v-if="!gameOver && !isLoading"
         block
         color="green-darken-3"
         size="large"
@@ -91,7 +138,7 @@
       </div>
 
       <!-- Instructions -->
-      <div v-if="!gameOver" class="text-center text-caption text-grey mt-2">
+      <div v-if="!gameOver && !isLoading" class="text-center text-caption text-grey mt-2">
         Type letters to fill the grid. Press Backspace to delete.
       </div>
     </v-card-text>
@@ -153,6 +200,14 @@ import { WordleGame, KEYBOARD_ROWS } from "~/classes/wordle";
 // Initialize game instance
 const gameInstance = new WordleGame(wordListText);
 
+// Game mode: 'daily' for word of the day, 'random' for random word
+type GameMode = 'daily' | 'random';
+const gameMode = ref<GameMode>('daily');
+
+// Loading state for API call
+const isLoading = ref(true);
+const apiError = ref<string | null>(null);
+
 // Reactive state - we use refs that sync with the game instance
 const targetWord = ref(gameInstance.targetWord);
 const currentGuess = ref(gameInstance.currentGuess);
@@ -208,13 +263,48 @@ function submitGuess(): void {
 }
 
 function handleKeydown(event: KeyboardEvent): void {
+  if (isLoading.value) return;
   gameInstance.handleKeyPress(event.key);
   syncState();
 }
 
-function resetGame(): void {
-  gameInstance.reset();
+async function fetchWordOfTheDay(): Promise<string | null> {
+  try {
+    const response = await fetch("/api/wordle/word-of-the-day");
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const word = await response.text();
+    return word.trim().toLowerCase();
+  } catch (error) {
+    console.error("Failed to fetch word of the day:", error);
+    return null;
+  }
+}
+
+async function resetGame(): Promise<void> {
+  isLoading.value = true;
+  apiError.value = null;
+  
+  if (gameMode.value === 'daily') {
+    const word = await fetchWordOfTheDay();
+    if (word) {
+      gameInstance.reset(word);
+    } else {
+      apiError.value = "Could not fetch word of the day. Using random word.";
+      gameInstance.reset();
+    }
+  } else {
+    // Random mode - use local word list
+    gameInstance.reset();
+  }
+  
+  isLoading.value = false;
   syncState();
+}
+
+async function onGameModeChange(): Promise<void> {
+  await resetGame();
 }
 
 function clearError(): void {
@@ -223,9 +313,9 @@ function clearError(): void {
 }
 
 // Initialize game on mount and add keyboard listener
-onMounted(() => {
-  syncState();
+onMounted(async () => {
   window.addEventListener("keydown", handleKeydown);
+  await resetGame();
 });
 
 // Clean up keyboard listener
