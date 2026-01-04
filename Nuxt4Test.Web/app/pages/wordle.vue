@@ -1,13 +1,15 @@
 <template>
   <v-card class="mx-auto" max-width="600">
-    <v-card-title class="bg-green-darken-3 text-white d-flex align-center justify-space-between">
+    <v-card-title
+      class="bg-green-darken-3 text-white d-flex align-center justify-space-between"
+    >
       <span>🟩 Wordle</span>
       <v-chip
         :color="gameMode === 'daily' ? 'yellow-darken-2' : 'blue-grey'"
         size="small"
         variant="flat"
       >
-        {{ gameMode === 'daily' ? '📅 Daily' : '🎲 Random' }}
+        {{ gameMode === "daily" ? "📅 Daily" : "🎲 Random" }}
       </v-chip>
     </v-card-title>
 
@@ -36,7 +38,13 @@
       <!-- Loading state -->
       <div v-if="isLoading" class="d-flex flex-column align-center pa-8">
         <v-progress-circular indeterminate color="green-darken-3" size="64" />
-        <p class="mt-4 text-grey">{{ gameMode === 'daily' ? 'Loading word of the day...' : 'Getting random word...' }}</p>
+        <p class="mt-4 text-grey">
+          {{
+            gameMode === "daily"
+              ? "Loading word of the day..."
+              : "Getting random word..."
+          }}
+        </p>
       </div>
 
       <!-- API error message -->
@@ -122,6 +130,61 @@
         Submit Guess (or press Enter)
       </v-btn>
 
+      <!-- Hint section -->
+      <div v-if="!gameOver && !isLoading" class="mb-4">
+        <v-btn
+          block
+          variant="outlined"
+          color="blue-darken-2"
+          size="large"
+          @click="getHint"
+          class="mb-2"
+        >
+          <v-icon start>mdi-lightbulb-outline</v-icon>
+          Get Hint
+        </v-btn>
+
+        <v-alert
+          v-if="showHint && hintWord"
+          type="info"
+          variant="tonal"
+          density="compact"
+          closable
+          @click:close="showHint = false"
+        >
+          <div class="d-flex align-center justify-space-between">
+            <div>
+              <strong>Suggested word:</strong>
+              <span class="text-h6 ml-2 font-weight-bold">{{
+                hintWord.toUpperCase()
+              }}</span>
+            </div>
+            <v-btn
+              size="small"
+              variant="text"
+              color="blue-darken-2"
+              @click="useHint"
+            >
+              Use it
+            </v-btn>
+          </div>
+          <div class="text-caption mt-1">
+            {{ possibleWordsCount }} possible words remaining
+          </div>
+        </v-alert>
+
+        <v-alert
+          v-if="showHint && !hintWord"
+          type="warning"
+          variant="tonal"
+          density="compact"
+          closable
+          @click:close="showHint = false"
+        >
+          No valid words found. Check your guesses!
+        </v-alert>
+      </div>
+
       <!-- Game over message -->
       <div v-if="gameOver" class="text-center">
         <v-alert :type="won ? 'success' : 'error'" class="mb-4">
@@ -138,7 +201,10 @@
       </div>
 
       <!-- Instructions -->
-      <div v-if="!gameOver && !isLoading" class="text-center text-caption text-grey mt-2">
+      <div
+        v-if="!gameOver && !isLoading"
+        class="text-center text-caption text-grey mt-2"
+      >
         Type letters to fill the grid. Press Backspace to delete.
       </div>
     </v-card-text>
@@ -195,14 +261,26 @@
 
 <script setup lang="ts">
 import wordListText from "~/data/words.txt?raw";
-import { WordleGame, KEYBOARD_ROWS } from "~/classes/wordle";
+import { WordleGame, HintSolver, KEYBOARD_ROWS } from "~/classes/wordle";
 
 // Initialize game instance
 const gameInstance = new WordleGame(wordListText);
 
+// Initialize hint solver with word list
+const wordList = wordListText
+  .split("\n")
+  .map((w) => w.trim().toLowerCase())
+  .filter((w) => w.length === 5);
+const hintSolver = new HintSolver(wordList);
+
 // Game mode: 'daily' for word of the day, 'random' for random word
-type GameMode = 'daily' | 'random';
-const gameMode = ref<GameMode>('daily');
+type GameMode = "daily" | "random";
+const gameMode = ref<GameMode>("daily");
+
+// Hint state
+const hintWord = ref<string | null>(null);
+const showHint = ref(false);
+const possibleWordsCount = ref(0);
 
 // Loading state for API call
 const isLoading = ref(true);
@@ -260,6 +338,33 @@ function handleKeyClick(key: string): void {
 function submitGuess(): void {
   gameInstance.submitGuess();
   syncState();
+  // Clear hint when a guess is submitted
+  showHint.value = false;
+  hintWord.value = null;
+}
+
+function getHint(): void {
+  const state = gameInstance.getState();
+  hintWord.value = hintSolver.getHint(state.guesses, state.targetWord);
+  possibleWordsCount.value = hintSolver.getPossibleWordCount(
+    state.guesses,
+    state.targetWord
+  );
+  showHint.value = true;
+}
+
+function useHint(): void {
+  if (hintWord.value) {
+    // Clear current guess and type in the hint
+    for (let i = 0; i < gameInstance.currentGuess.length; i++) {
+      gameInstance.handleKeyPress("Backspace");
+    }
+    for (const letter of hintWord.value) {
+      gameInstance.handleKeyPress(letter);
+    }
+    syncState();
+    showHint.value = false;
+  }
 }
 
 function handleKeydown(event: KeyboardEvent): void {
@@ -285,8 +390,10 @@ async function fetchWordOfTheDay(): Promise<string | null> {
 async function resetGame(): Promise<void> {
   isLoading.value = true;
   apiError.value = null;
-  
-  if (gameMode.value === 'daily') {
+  showHint.value = false;
+  hintWord.value = null;
+
+  if (gameMode.value === "daily") {
     const word = await fetchWordOfTheDay();
     if (word) {
       gameInstance.reset(word);
@@ -298,7 +405,7 @@ async function resetGame(): Promise<void> {
     // Random mode - use local word list
     gameInstance.reset();
   }
-  
+
   isLoading.value = false;
   syncState();
 }

@@ -5,4 +5,5 @@ export { WordList } from "./WordList";
 export { KeyboardState } from "./KeyboardState";
 export { LetterEvaluator } from "./LetterEvaluator";
 export { WordleGame } from "./WordleGame";
+export { HintSolver } from "./HintSolver";
 export type { GameState, GuessResult } from "./WordleGame";

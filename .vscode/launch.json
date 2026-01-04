@@ -1,30 +1,30 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "C# API",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceFolder}/Nuxt4Test.Api/bin/Debug/net10.0/Nuxt4Test.Api.dll",
-            "args": [],
-            "cwd": "${workspaceFolder}/Nuxt4Test.Api",
-            "stopAtEntry": false,
-            "serverReadyAction": {
-                "action": "openExternally",
-                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
-            },
-            "env": {
-                "ASPNETCORE_ENVIRONMENT": "Development"
-            }
-        }
-    ],
-    "compounds": [
-        {
-            "name": "Full Stack (API + Web)",
-            "configurations": ["C# API"],
-            "preLaunchTask": "npm-dev",
-            "stopAll": true
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C# API",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/Nuxt4Test.Api/bin/Debug/net10.0/Nuxt4Test.Api.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/Nuxt4Test.Api",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full Stack (API + Web)",
+      "configurations": ["C# API"],
+      "preLaunchTask": "npm-dev",
+      "stopAll": true
+    }
+  ]
 }

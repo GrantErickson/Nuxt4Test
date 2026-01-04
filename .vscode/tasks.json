@@ -1,36 +1,36 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "build",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "build",
-                "${workspaceFolder}/Nuxt4Test.Api/Nuxt4Test.Api.csproj",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary;ForceNoAlign"
-            ],
-            "problemMatcher": "$msCompile"
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/Nuxt4Test.Api/Nuxt4Test.Api.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary;ForceNoAlign"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "npm-dev",
+      "type": "shell",
+      "command": "npm run dev -- --open",
+      "options": {
+        "cwd": "${workspaceFolder}/Nuxt4Test.Web"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^$"
         },
-        {
-            "label": "npm-dev",
-            "type": "shell",
-            "command": "npm run dev",
-            "options": {
-                "cwd": "${workspaceFolder}/Nuxt4Test.Web"
-            },
-            "isBackground": true,
-            "problemMatcher": {
-                "pattern": {
-                    "regexp": "^$"
-                },
-                "background": {
-                    "activeOnStart": true,
-                    "beginsPattern": ".",
-                    "endsPattern": "Nuxt Nitro server built|ready in|Local:"
-                }
-            }
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Nuxt Nitro server built|ready in|Local:"
         }
-    ]
+      }
+    }
+  ]
 }
