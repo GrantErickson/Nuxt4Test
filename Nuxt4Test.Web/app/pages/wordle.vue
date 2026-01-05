@@ -139,6 +139,8 @@
           size="large"
           @click="getHint"
           class="mb-2"
+          :loading="hintLoading"
+          :disabled="hintLoading"
         >
           <v-icon start>mdi-lightbulb-outline</v-icon>
           Get Hint
@@ -149,8 +151,6 @@
           type="info"
           variant="tonal"
           density="compact"
-          closable
-          @click:close="showHint = false"
         >
           <div class="d-flex align-center justify-space-between">
             <div>
@@ -161,10 +161,12 @@
             </div>
             <v-btn
               size="small"
-              variant="text"
-              color="blue-darken-2"
+              variant="elevated"
+              color="green-darken-2"
               @click="useHint"
+              class="ml-2"
             >
+              <v-icon start size="small">mdi-check-circle</v-icon>
               Use it
             </v-btn>
           </div>
@@ -178,8 +180,6 @@
           type="warning"
           variant="tonal"
           density="compact"
-          closable
-          @click:close="showHint = false"
         >
           No valid words found. Check your guesses!
         </v-alert>
@@ -280,6 +280,7 @@ const gameMode = ref<GameMode>("daily");
 // Hint state
 const hintWord = ref<string | null>(null);
 const showHint = ref(false);
+const hintLoading = ref(false);
 const possibleWordsCount = ref(0);
 
 // Loading state for API call
@@ -343,13 +344,18 @@ function submitGuess(): void {
   hintWord.value = null;
 }
 
-function getHint(): void {
+async function getHint(): Promise<void> {
+  hintLoading.value = true;
+  showHint.value = false;
+  // Use setTimeout to allow UI to update before calculation
+  await new Promise((resolve) => setTimeout(resolve, 50));
   const state = gameInstance.getState();
   hintWord.value = hintSolver.getHint(state.guesses, state.targetWord);
   possibleWordsCount.value = hintSolver.getPossibleWordCount(
     state.guesses,
     state.targetWord
   );
+  hintLoading.value = false;
   showHint.value = true;
 }
 
