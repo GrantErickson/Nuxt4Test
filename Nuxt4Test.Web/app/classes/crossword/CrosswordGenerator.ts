@@ -3,7 +3,7 @@ import type { Cell, Clue, PlacedWord, WordClue, CrosswordState } from "./types";
 import { getAllWords } from "./WordBank";
 
 export class CrosswordGenerator {
-  private gridSize: number = 6;
+  private gridSize: number = 7;
   private grid: (string | null)[][];
   private placedWords: PlacedWord[] = [];
   private wordBank: WordClue[] = [];

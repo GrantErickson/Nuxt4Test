@@ -4,7 +4,7 @@
       class="bg-indigo-darken-3 text-white d-flex align-center justify-space-between"
     >
       <span>📝 Crossword</span>
-      <v-chip color="amber" variant="flat" size="small"> 6×6 Puzzle </v-chip>
+      <v-chip color="amber" variant="flat" size="small"> 7×7 Puzzle </v-chip>
     </v-card-title>
 
     <v-card-text v-if="isLoading" class="pa-4 text-center">
@@ -37,9 +37,9 @@
         <!-- Crossword Grid -->
         <div class="crossword-container">
           <div class="crossword-grid">
-            <div v-for="row in 6" :key="'row-' + row" class="crossword-row">
+            <div v-for="row in 7" :key="'row-' + row" class="crossword-row">
               <div
-                v-for="col in 6"
+                v-for="col in 7"
                 :key="'cell-' + row + '-' + col"
                 class="crossword-cell"
                 :class="getCellClass(row - 1, col - 1)"
