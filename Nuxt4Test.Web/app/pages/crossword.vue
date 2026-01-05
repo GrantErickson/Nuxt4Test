@@ -187,15 +187,24 @@
 import { CrosswordGame } from "~/classes/crossword";
 import type { Clue } from "~/classes/crossword/types";
 
-// Initialize game
-const game = reactive(new CrosswordGame());
-const state = computed(() => game.getState());
-const selectedClue = computed(() => game.getSelectedClue());
+// Initialize game - use shallowRef and triggerRef for proper reactivity
+const game = shallowRef(new CrosswordGame());
+
+// Force Vue to re-render by triggering the ref
+function updateGame(): void {
+  triggerRef(game);
+}
+
+const state = computed(() => game.value.getState());
+const selectedClue = computed(() => game.value.getSelectedClue());
 
 // Direction toggle synced with game state
 const currentDirection = computed({
   get: () => state.value.selectedDirection,
-  set: (value: "across" | "down") => game.setDirection(value),
+  set: (value: "across" | "down") => {
+    game.value.setDirection(value);
+    updateGame();
+  },
 });
 
 // Keyboard layout
@@ -216,7 +225,7 @@ function getCellClass(row: number, col: number): Record<string, boolean> {
   const isSelected =
     state.value.selectedCell?.row === row &&
     state.value.selectedCell?.col === col;
-  const isInWord = game.isCellInSelectedWord(row, col);
+  const isInWord = game.value.isCellInSelectedWord(row, col);
   const isCorrect = cell.userInput === cell.letter && cell.userInput !== "";
   const isRevealed = cell.revealed;
 
@@ -230,11 +239,13 @@ function getCellClass(row: number, col: number): Record<string, boolean> {
 }
 
 function selectCell(row: number, col: number): void {
-  game.selectCell(row, col);
+  game.value.selectCell(row, col);
+  updateGame();
 }
 
 function selectClue(clue: Clue): void {
-  game.selectClue(clue);
+  game.value.selectClue(clue);
+  updateGame();
 }
 
 function isClueSelected(clue: Clue): boolean {
@@ -246,39 +257,47 @@ function isClueSelected(clue: Clue): boolean {
 
 function handleKeyClick(key: string): void {
   if (key === "BACK") {
-    game.deleteLetter();
+    game.value.deleteLetter();
   } else {
-    game.inputLetter(key);
+    game.value.inputLetter(key);
   }
+  updateGame();
 }
 
 function newGame(): void {
-  game.newGame();
+  game.value = new CrosswordGame();
 }
 
 function revealCell(): void {
-  game.revealCell();
+  game.value.revealCell();
+  updateGame();
 }
 
 function revealAll(): void {
-  game.revealAll();
+  game.value.revealAll();
+  updateGame();
 }
 
 function clearAll(): void {
-  game.clearAll();
+  game.value.clearAll();
+  updateGame();
 }
 
 // Keyboard event handler
 function handleKeyDown(event: KeyboardEvent): void {
   if (event.key === "Backspace") {
     event.preventDefault();
-    game.deleteLetter();
+    game.value.deleteLetter();
+    updateGame();
   } else if (event.key === "ArrowRight") {
-    game.setDirection("across");
+    game.value.setDirection("across");
+    updateGame();
   } else if (event.key === "ArrowDown") {
-    game.setDirection("down");
+    game.value.setDirection("down");
+    updateGame();
   } else if (/^[a-zA-Z]$/.test(event.key)) {
-    game.inputLetter(event.key);
+    game.value.inputLetter(event.key);
+    updateGame();
   }
 }
 

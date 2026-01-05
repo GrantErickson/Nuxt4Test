@@ -16,6 +16,8 @@ export class CrosswordGame {
   }
 
   newGame(): void {
+    // Create a fresh generator to ensure clean state
+    this.generator = new CrosswordGenerator();
     this.state = this.generator.generate();
   }
 
