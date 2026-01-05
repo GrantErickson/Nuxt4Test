@@ -373,9 +373,17 @@ function handleKeydown(event: KeyboardEvent): void {
   syncState();
 }
 
+// Get runtime config for API base URL
+const config = useRuntimeConfig();
+
 async function fetchWordOfTheDay(): Promise<string | null> {
   try {
-    const response = await fetch("/api/wordle/word-of-the-day");
+    // In development, use the proxy (/api/). In production, use the configured API base URL.
+    const isDev = import.meta.dev;
+    const url = isDev
+      ? "/api/wordle/word-of-the-day"
+      : `${config.public.apiBaseUrl}/wordle/word-of-the-day`;
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }

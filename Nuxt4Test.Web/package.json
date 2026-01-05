@@ -22,6 +22,7 @@
     "vuetify-nuxt-module": "^0.19.1"
   },
   "devDependencies": {
-    "@types/matter-js": "^0.20.2"
+    "@types/matter-js": "^0.20.2",
+    "@types/node": "^25.0.3"
   }
 }

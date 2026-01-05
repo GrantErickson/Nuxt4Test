@@ -24,6 +24,13 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
+
+    options.AddPolicy("Production", policy =>
+    {
+        policy.WithOrigins("https://agreeable-hill-0ba6d931e.2.azurestaticapps.net")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
 });
 
 var app = builder.Build();
@@ -34,6 +41,10 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference();
     app.UseCors("NuxtDev");
+}
+else
+{
+    app.UseCors("Production");
 }
 
 app.UseHttpsRedirection();
