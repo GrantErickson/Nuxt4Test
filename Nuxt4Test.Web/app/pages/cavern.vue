@@ -76,10 +76,10 @@
         <span class="d-flex align-center ga-1">🧙 You</span>
         <span class="d-flex align-center ga-1">💎 Gem</span>
         <span class="d-flex align-center ga-1">
-          <span class="legend-box water"></span> Water (deadly!)
+          <span class="legend-box water"/> Water (deadly!)
         </span>
         <span class="d-flex align-center ga-1">
-          <span class="legend-box wall"></span> Wall (click to break)
+          <span class="legend-box wall"/> Wall (click to break)
         </span>
       </div>
     </v-card-text>

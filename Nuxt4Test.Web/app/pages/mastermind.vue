@@ -30,7 +30,7 @@
               :key="'secret-' + i"
               class="peg"
               :class="'bg-' + color"
-            ></div>
+            />
           </div>
         </template>
       </v-alert>
@@ -49,7 +49,7 @@
               :key="'peg-' + guessIndex + '-' + pegIndex"
               class="peg"
               :class="'bg-' + color"
-            ></div>
+            />
           </div>
 
           <!-- Feedback -->
@@ -59,13 +59,13 @@
               :key="'exact-' + guessIndex + '-' + n"
               class="feedback-peg bg-black"
               title="Right color, right place"
-            ></div>
+            />
             <div
               v-for="n in guess.feedback.colorMatches"
               :key="'color-' + guessIndex + '-' + n"
               class="feedback-peg bg-white"
               title="Right color, wrong place"
-            ></div>
+            />
             <div
               v-for="n in codeLength -
               guess.feedback.exactMatches -
@@ -73,7 +73,7 @@
               :key="'empty-' + guessIndex + '-' + n"
               class="feedback-peg bg-grey-lighten-2"
               title="Wrong color"
-            ></div>
+            />
           </div>
         </div>
       </div>
@@ -100,7 +100,7 @@
         </div>
 
         <!-- Placeholder for feedback alignment -->
-        <div style="width: 52px"></div>
+        <div style="width: 52px"/>
       </div>
 
       <!-- Color picker -->
@@ -145,18 +145,18 @@
       </div>
 
       <!-- Legend -->
-      <v-divider class="my-4"></v-divider>
+      <v-divider class="my-4"/>
       <div class="text-caption text-grey-darken-1">
         <div class="d-flex align-center ga-2 mb-1">
-          <div class="feedback-peg bg-black"></div>
+          <div class="feedback-peg bg-black"/>
           <span>= Right color, right place</span>
         </div>
         <div class="d-flex align-center ga-2 mb-1">
-          <div class="feedback-peg bg-white"></div>
+          <div class="feedback-peg bg-white"/>
           <span>= Right color, wrong place</span>
         </div>
         <div class="d-flex align-center ga-2">
-          <div class="feedback-peg bg-grey-lighten-2"></div>
+          <div class="feedback-peg bg-grey-lighten-2"/>
           <span>= Wrong color</span>
         </div>
       </div>

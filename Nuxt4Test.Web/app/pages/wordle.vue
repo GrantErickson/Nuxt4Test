@@ -100,7 +100,7 @@
             v-for="i in 5"
             :key="i"
             class="letter-box empty d-flex align-center justify-center"
-          ></div>
+          />
         </div>
       </div>
 
@@ -123,9 +123,9 @@
         block
         color="green-darken-3"
         size="large"
-        @click="submitGuess"
         :disabled="currentGuess.length !== 5"
         class="mb-2"
+        @click="submitGuess"
       >
         Submit Guess (or press Enter)
       </v-btn>
@@ -137,10 +137,10 @@
           variant="outlined"
           color="blue-darken-2"
           size="large"
-          @click="getHint"
           class="mb-2"
           :loading="hintLoading"
           :disabled="hintLoading"
+          @click="getHint"
         >
           <v-icon start>mdi-lightbulb-outline</v-icon>
           Get Hint
@@ -163,8 +163,8 @@
               size="small"
               variant="elevated"
               color="green-darken-2"
-              @click="useHint"
               class="ml-2"
+              @click="useHint"
             >
               <v-icon start size="small">mdi-check-circle</v-icon>
               Use it

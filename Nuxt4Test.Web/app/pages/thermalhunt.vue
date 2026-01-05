@@ -69,7 +69,7 @@
       <!-- Instructions -->
       <div class="text-center text-caption text-grey-darken-1 mt-4">
         Click cells to reveal their heat. Each distance has a unique color!
-        <br />
+        <br >
         🔥 Red = Very close &nbsp;|&nbsp; 🧊 Blue = Far away
       </div>
     </v-card-text>
@@ -79,7 +79,7 @@
       <div class="text-subtitle-2 mb-2">🗺️ Heat Map Legend:</div>
       <div class="d-flex align-center ga-2">
         <span class="text-caption">🔥 Close (0)</span>
-        <div class="legend-gradient"></div>
+        <div class="legend-gradient"/>
         <span class="text-caption">Far ({{ maxDistance }}) 🧊</span>
       </div>
     </v-card-text>

@@ -18,7 +18,7 @@
       <div class="d-flex flex-column align-center">
         <!-- Physics canvas -->
         <div ref="canvasContainer" class="canvas-container">
-          <canvas ref="canvasEl" @click="handleCanvasClick"></canvas>
+          <canvas ref="canvasEl" @click="handleCanvasClick"/>
         </div>
       </div>
 
