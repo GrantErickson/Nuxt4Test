@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'Nuxt4Test.Web/**'
+      - "Nuxt4Test.Web/**"
 
   pull_request:
     types: [opened, synchronize, reopened, closed]
@@ -29,6 +29,9 @@ jobs:
       - name: npm ci
         working-directory: ./Nuxt4Test.Web
         run: npm ci
+      - name: Run tests
+        working-directory: ./Nuxt4Test.Web
+        run: npm run test -- --run
       - name: Build for static deployment
         working-directory: ./Nuxt4Test.Web
         run: npm run build
@@ -56,9 +59,3 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_AGREEABLE_HILL_0BA6D931E }}
           action: "close"
-
-
-
-
-
-
