@@ -114,7 +114,8 @@ export class CrosswordGame {
     }
 
     // Check if new position is valid
-    if (row < 6 && col < 6) {
+    const gridSize = this.state.grid.length;
+    if (row < gridSize && col < gridSize) {
       const cell = this.state.grid[row]?.[col];
       if (cell && !cell.isBlack) {
         this.state.selectedCell = { row, col };
@@ -160,8 +161,9 @@ export class CrosswordGame {
   }
 
   revealAll(): void {
-    for (let row = 0; row < 6; row++) {
-      for (let col = 0; col < 6; col++) {
+    const gridSize = this.state.grid.length;
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col < gridSize; col++) {
         const cell = this.state.grid[row]?.[col];
         if (cell && !cell.isBlack && cell.letter) {
           cell.userInput = cell.letter;
@@ -173,8 +175,9 @@ export class CrosswordGame {
   }
 
   clearAll(): void {
-    for (let row = 0; row < 6; row++) {
-      for (let col = 0; col < 6; col++) {
+    const gridSize = this.state.grid.length;
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col < gridSize; col++) {
         const cell = this.state.grid[row]?.[col];
         if (cell && !cell.isBlack) {
           cell.userInput = "";
@@ -189,8 +192,9 @@ export class CrosswordGame {
     let allFilled = true;
     let allCorrect = true;
 
-    for (let row = 0; row < 6; row++) {
-      for (let col = 0; col < 6; col++) {
+    const gridSize = this.state.grid.length;
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col < gridSize; col++) {
         const cell = this.state.grid[row]?.[col];
         if (cell && !cell.isBlack) {
           if (!cell.userInput) {
