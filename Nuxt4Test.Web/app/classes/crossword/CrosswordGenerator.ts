@@ -81,7 +81,7 @@ export class CrosswordGenerator {
       const col = direction === "across" ? startCol + i : startCol;
       const letterChar = wordUpper[i];
       if (!letterChar) return false;
-      
+
       const existing = this.getGridCell(row, col);
 
       if (existing !== null && existing !== undefined) {
@@ -97,8 +97,10 @@ export class CrosswordGenerator {
           // For horizontal word, check cells above and below
           const above = this.getGridCell(row - 1, col);
           const below = this.getGridCell(row + 1, col);
-          if ((above !== null && above !== undefined) || 
-              (below !== null && below !== undefined)) {
+          if (
+            (above !== null && above !== undefined) ||
+            (below !== null && below !== undefined)
+          ) {
             // There's an adjacent letter - only allow if it's part of a perpendicular word
             // that intersects at this position
             const isPartOfVerticalWord = this.placedWords.some(
@@ -114,8 +116,10 @@ export class CrosswordGenerator {
           // For vertical word, check cells left and right
           const left = this.getGridCell(row, col - 1);
           const right = this.getGridCell(row, col + 1);
-          if ((left !== null && left !== undefined) || 
-              (right !== null && right !== undefined)) {
+          if (
+            (left !== null && left !== undefined) ||
+            (right !== null && right !== undefined)
+          ) {
             const isPartOfHorizontalWord = this.placedWords.some(
               (pw) =>
                 pw.direction === "across" &&
@@ -253,7 +257,7 @@ export class CrosswordGenerator {
 
       if (filledCells > bestFilledCells) {
         bestFilledCells = filledCells;
-        bestGrid = this.grid.map(row => [...row]);
+        bestGrid = this.grid.map((row) => [...row]);
         bestPlacedWords = [...this.placedWords];
       }
     }
@@ -267,11 +271,24 @@ export class CrosswordGenerator {
 
   private generateSingleAttempt(): void {
     // Sort words by how many common letters they have (prioritize E, A, R, S, T, O, N, I, L)
-    const commonLetters = new Set(['E', 'A', 'R', 'S', 'T', 'O', 'N', 'I', 'L', 'C', 'U', 'D']);
-    
+    const commonLetters = new Set([
+      "E",
+      "A",
+      "R",
+      "S",
+      "T",
+      "O",
+      "N",
+      "I",
+      "L",
+      "C",
+      "U",
+      "D",
+    ]);
+
     const scoredWords = this.wordBank
-      .filter(w => w.word.length >= 3 && w.word.length <= this.gridSize)
-      .map(w => {
+      .filter((w) => w.word.length >= 3 && w.word.length <= this.gridSize)
+      .map((w) => {
         const upper = w.word.toUpperCase();
         let score = 0;
         for (const char of upper) {
@@ -283,8 +300,8 @@ export class CrosswordGenerator {
       })
       .sort((a, b) => b.score - a.score);
 
-    const prioritizedWords = scoredWords.map(s => s.wordClue);
-    
+    const prioritizedWords = scoredWords.map((s) => s.wordClue);
+
     // Place first word - pick a good starting word (5-7 letters, lots of common letters)
     const firstWordCandidates = prioritizedWords.filter(
       (w) => w.word.length >= 5 && w.word.length <= this.gridSize
@@ -303,7 +320,7 @@ export class CrosswordGenerator {
     const maxRounds = 20;
     for (let round = 0; round < maxRounds; round++) {
       const beforeCount = this.placedWords.length;
-      
+
       // Shuffle for variety but keep some prioritization
       const wordsToTry = this.shuffleArray([...prioritizedWords]);
 
@@ -321,13 +338,13 @@ export class CrosswordGenerator {
   }
 
   private tryPlaceWord(wordClue: WordClue): boolean {
-    const directions: ("across" | "down")[] = 
+    const directions: ("across" | "down")[] =
       Math.random() < 0.5 ? ["across", "down"] : ["down", "across"];
 
     for (const direction of directions) {
       // Get all possible intersection points
       const intersections = this.findIntersections(wordClue.word, direction);
-      
+
       // Sort intersections by how central they are (prefer middle of grid)
       const center = this.gridSize / 2;
       intersections.sort((a, b) => {
@@ -337,8 +354,20 @@ export class CrosswordGenerator {
       });
 
       for (const intersection of intersections) {
-        if (this.canPlaceWord(wordClue.word, intersection.row, intersection.col, direction)) {
-          this.placeWord(wordClue, intersection.row, intersection.col, direction);
+        if (
+          this.canPlaceWord(
+            wordClue.word,
+            intersection.row,
+            intersection.col,
+            direction
+          )
+        ) {
+          this.placeWord(
+            wordClue,
+            intersection.row,
+            intersection.col,
+            direction
+          );
           return true;
         }
       }
