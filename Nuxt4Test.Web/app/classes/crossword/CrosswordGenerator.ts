@@ -63,116 +63,101 @@ export class CrosswordGenerator {
     direction: "across" | "down"
   ): boolean {
     const len = word.length;
+    const wordUpper = word.toUpperCase();
 
     // Check bounds
+    if (startRow < 0 || startCol < 0) return false;
     if (direction === "across") {
       if (startCol + len > this.gridSize) return false;
     } else {
       if (startRow + len > this.gridSize) return false;
     }
 
-    // Check each cell
+    let hasIntersection = this.placedWords.length === 0; // First word doesn't need intersection
+
+    // Check each cell of the word
     for (let i = 0; i < len; i++) {
       const row = direction === "across" ? startRow : startRow + i;
       const col = direction === "across" ? startCol + i : startCol;
-      const letterChar = word[i];
+      const letterChar = wordUpper[i];
       if (!letterChar) return false;
-      const letter = letterChar.toUpperCase();
+      
       const existing = this.getGridCell(row, col);
 
-      // If cell is empty or has the same letter, it's ok
-      if (existing !== null && existing !== undefined && existing !== letter) {
-        return false;
-      }
-
-      // Check for adjacent parallel words (avoid creating invalid words)
-      if (direction === "across") {
-        // Check above and below
-        if (existing === null || existing === undefined) {
-          const aboveCell = this.getGridCell(row - 1, col);
-          if (row > 0 && aboveCell !== null && aboveCell !== undefined) {
-            // There's a letter above, need to check if this creates a valid crossing
-            const hasVerticalWord = this.placedWords.some(
-              (pw) =>
-                pw.direction === "down" &&
-                pw.startCol === col &&
-                pw.startRow <= row &&
-                pw.startRow + pw.word.length > row
-            );
-            if (!hasVerticalWord) return false;
-          }
-          const belowCell = this.getGridCell(row + 1, col);
-          if (
-            row < this.gridSize - 1 &&
-            belowCell !== null &&
-            belowCell !== undefined
-          ) {
-            const hasVerticalWord = this.placedWords.some(
-              (pw) =>
-                pw.direction === "down" &&
-                pw.startCol === col &&
-                pw.startRow <= row &&
-                pw.startRow + pw.word.length > row
-            );
-            if (!hasVerticalWord) return false;
-          }
+      if (existing !== null && existing !== undefined) {
+        // Cell is occupied - must match our letter
+        if (existing !== letterChar) {
+          return false;
         }
+        hasIntersection = true; // This is a valid intersection
       } else {
-        // Check left and right
-        if (existing === null || existing === undefined) {
-          const leftCell = this.getGridCell(row, col - 1);
-          if (col > 0 && leftCell !== null && leftCell !== undefined) {
-            const hasHorizontalWord = this.placedWords.some(
+        // Cell is empty - check adjacent cells in parallel direction
+        // to avoid creating unintended adjacent words
+        if (direction === "across") {
+          // For horizontal word, check cells above and below
+          const above = this.getGridCell(row - 1, col);
+          const below = this.getGridCell(row + 1, col);
+          if ((above !== null && above !== undefined) || 
+              (below !== null && below !== undefined)) {
+            // There's an adjacent letter - only allow if it's part of a perpendicular word
+            // that intersects at this position
+            const isPartOfVerticalWord = this.placedWords.some(
               (pw) =>
-                pw.direction === "across" &&
-                pw.startRow === row &&
-                pw.startCol <= col &&
-                pw.startCol + pw.word.length > col
+                pw.direction === "down" &&
+                pw.startCol === col &&
+                pw.startRow <= row &&
+                pw.startRow + pw.word.length > row
             );
-            if (!hasHorizontalWord) return false;
+            if (!isPartOfVerticalWord) return false;
           }
-          const rightCell = this.getGridCell(row, col + 1);
-          if (
-            col < this.gridSize - 1 &&
-            rightCell !== null &&
-            rightCell !== undefined
-          ) {
-            const hasHorizontalWord = this.placedWords.some(
+        } else {
+          // For vertical word, check cells left and right
+          const left = this.getGridCell(row, col - 1);
+          const right = this.getGridCell(row, col + 1);
+          if ((left !== null && left !== undefined) || 
+              (right !== null && right !== undefined)) {
+            const isPartOfHorizontalWord = this.placedWords.some(
               (pw) =>
                 pw.direction === "across" &&
                 pw.startRow === row &&
                 pw.startCol <= col &&
                 pw.startCol + pw.word.length > col
             );
-            if (!hasHorizontalWord) return false;
+            if (!isPartOfHorizontalWord) return false;
           }
         }
       }
     }
 
-    // Check before and after the word
+    // Word must intersect with existing words (unless it's the first word)
+    if (!hasIntersection && this.placedWords.length > 0) {
+      return false;
+    }
+
+    // Check cell immediately before the word start
     if (direction === "across") {
-      const beforeCell = this.getGridCell(startRow, startCol - 1);
-      if (startCol > 0 && beforeCell !== null && beforeCell !== undefined)
-        return false;
-      const afterCell = this.getGridCell(startRow, startCol + len);
-      if (
-        startCol + len < this.gridSize &&
-        afterCell !== null &&
-        afterCell !== undefined
-      )
-        return false;
+      if (startCol > 0) {
+        const before = this.getGridCell(startRow, startCol - 1);
+        if (before !== null && before !== undefined) return false;
+      }
     } else {
-      const beforeCell = this.getGridCell(startRow - 1, startCol);
-      if (startRow > 0 && beforeCell !== null && beforeCell !== undefined)
-        return false;
-      const afterCell = this.getGridCell(startRow + len, startCol);
-      if (
-        startRow + len < this.gridSize &&
-        afterCell !== null &&
-        afterCell !== undefined
-      )
-        return false;
+      if (startRow > 0) {
+        const before = this.getGridCell(startRow - 1, startCol);
+        if (before !== null && before !== undefined) return false;
+      }
+    }
+
+    // Check cell immediately after the word end
+    if (direction === "across") {
+      if (startCol + len < this.gridSize) {
+        const after = this.getGridCell(startRow, startCol + len);
+        if (after !== null && after !== undefined) return false;
+      }
+    } else {
+      if (startRow + len < this.gridSize) {
+        const after = this.getGridCell(startRow + len, startCol);
+        if (after !== null && after !== undefined) return false;
+      }
     }
 
     return true;
@@ -244,103 +229,140 @@ export class CrosswordGenerator {
   }
 
   generate(): CrosswordState {
-    this.grid = this.createEmptyGrid();
-    this.placedWords = [];
-    this.usedWords.clear();
+    // Try multiple times and pick the best result
+    let bestGrid: (string | null)[][] = [];
+    let bestPlacedWords: PlacedWord[] = [];
+    let bestFilledCells = 0;
 
-    const shuffledWords = this.shuffleArray(this.wordBank);
-    let attempts = 0;
-    const maxAttempts = 100;
+    const numAttempts = 5; // Try 5 different puzzles
 
-    // Try to place the first word (preferably 5-6 letters)
-    const firstWordCandidates = shuffledWords.filter(
-      (w) => w.word.length >= 4 && w.word.length <= 6
+    for (let attempt = 0; attempt < numAttempts; attempt++) {
+      this.grid = this.createEmptyGrid();
+      this.placedWords = [];
+      this.usedWords.clear();
+
+      this.generateSingleAttempt();
+
+      // Count filled cells
+      let filledCells = 0;
+      for (let r = 0; r < this.gridSize; r++) {
+        for (let c = 0; c < this.gridSize; c++) {
+          if (this.getGridCell(r, c) !== null) filledCells++;
+        }
+      }
+
+      if (filledCells > bestFilledCells) {
+        bestFilledCells = filledCells;
+        bestGrid = this.grid.map(row => [...row]);
+        bestPlacedWords = [...this.placedWords];
+      }
+    }
+
+    // Use the best result
+    this.grid = bestGrid;
+    this.placedWords = bestPlacedWords;
+
+    return this.buildState();
+  }
+
+  private generateSingleAttempt(): void {
+    // Sort words by how many common letters they have (prioritize E, A, R, S, T, O, N, I, L)
+    const commonLetters = new Set(['E', 'A', 'R', 'S', 'T', 'O', 'N', 'I', 'L', 'C', 'U', 'D']);
+    
+    const scoredWords = this.wordBank
+      .filter(w => w.word.length >= 3 && w.word.length <= this.gridSize)
+      .map(w => {
+        const upper = w.word.toUpperCase();
+        let score = 0;
+        for (const char of upper) {
+          if (commonLetters.has(char)) score++;
+        }
+        // Prefer medium-length words (4-6 letters)
+        if (upper.length >= 4 && upper.length <= 6) score += 3;
+        return { wordClue: w, score };
+      })
+      .sort((a, b) => b.score - a.score);
+
+    const prioritizedWords = scoredWords.map(s => s.wordClue);
+    
+    // Place first word - pick a good starting word (5-7 letters, lots of common letters)
+    const firstWordCandidates = prioritizedWords.filter(
+      (w) => w.word.length >= 5 && w.word.length <= this.gridSize
     );
 
     for (const wordClue of firstWordCandidates) {
-      if (wordClue.word.length <= this.gridSize) {
-        // Place first word horizontally in the middle-ish
-        const startCol = Math.floor((this.gridSize - wordClue.word.length) / 2);
-        const startRow = Math.floor(this.gridSize / 2) - 1;
-        if (this.canPlaceWord(wordClue.word, startRow, startCol, "across")) {
-          this.placeWord(wordClue, startRow, startCol, "across");
-          break;
-        }
+      const startCol = Math.floor((this.gridSize - wordClue.word.length) / 2);
+      const startRow = Math.floor(this.gridSize / 2);
+      if (this.canPlaceWord(wordClue.word, startRow, startCol, "across")) {
+        this.placeWord(wordClue, startRow, startCol, "across");
+        break;
       }
     }
 
-    // Try to place more words
-    let lastPlacedCount = 0;
-    while (attempts < maxAttempts && this.placedWords.length < 8) {
-      attempts++;
+    // Now aggressively try to place more words
+    const maxRounds = 20;
+    for (let round = 0; round < maxRounds; round++) {
+      const beforeCount = this.placedWords.length;
+      
+      // Shuffle for variety but keep some prioritization
+      const wordsToTry = this.shuffleArray([...prioritizedWords]);
 
-      for (const wordClue of shuffledWords) {
-        if (
-          this.usedWords.has(wordClue.word.toUpperCase()) ||
-          wordClue.word.length > this.gridSize
-        ) {
-          continue;
-        }
+      for (const wordClue of wordsToTry) {
+        if (this.usedWords.has(wordClue.word.toUpperCase())) continue;
 
-        // Alternate directions
-        const direction: "across" | "down" =
-          this.placedWords.length % 2 === 0 ? "down" : "across";
-
-        // Find intersections with existing words
-        const intersections = this.findIntersections(wordClue.word, direction);
-
-        for (const intersection of intersections) {
-          if (
-            this.canPlaceWord(
-              wordClue.word,
-              intersection.row,
-              intersection.col,
-              direction
-            )
-          ) {
-            this.placeWord(
-              wordClue,
-              intersection.row,
-              intersection.col,
-              direction
-            );
-            break;
-          }
-        }
-
-        if (this.usedWords.has(wordClue.word.toUpperCase())) break;
+        // Try to place this word
+        const placed = this.tryPlaceWord(wordClue);
+        if (placed && this.placedWords.length >= 15) break; // Good enough
       }
 
-      // Break if we haven't placed any new words
-      if (this.placedWords.length === lastPlacedCount) {
-        // Try to place words without intersection (if grid is empty or stuck)
-        for (const wordClue of shuffledWords) {
-          if (
-            this.usedWords.has(wordClue.word.toUpperCase()) ||
-            wordClue.word.length > this.gridSize
-          ) {
-            continue;
-          }
-
-          const direction: "across" | "down" =
-            this.placedWords.length % 2 === 0 ? "across" : "down";
-
-          for (let row = 0; row < this.gridSize; row++) {
-            for (let col = 0; col < this.gridSize; col++) {
-              if (this.canPlaceWord(wordClue.word, row, col, direction)) {
-                this.placeWord(wordClue, row, col, direction);
-                break;
-              }
-            }
-            if (this.usedWords.has(wordClue.word.toUpperCase())) break;
-          }
-          if (this.usedWords.has(wordClue.word.toUpperCase())) break;
-        }
-      }
-      lastPlacedCount = this.placedWords.length;
+      // If no progress, break
+      if (this.placedWords.length === beforeCount) break;
     }
+  }
 
-    return this.buildState();
+  private tryPlaceWord(wordClue: WordClue): boolean {
+    const directions: ("across" | "down")[] = 
+      Math.random() < 0.5 ? ["across", "down"] : ["down", "across"];
+
+    for (const direction of directions) {
+      // Get all possible intersection points
+      const intersections = this.findIntersections(wordClue.word, direction);
+      
+      // Sort intersections by how central they are (prefer middle of grid)
+      const center = this.gridSize / 2;
+      intersections.sort((a, b) => {
+        const distA = Math.abs(a.row - center) + Math.abs(a.col - center);
+        const distB = Math.abs(b.row - center) + Math.abs(b.col - center);
+        return distA - distB;
+      });
+
+      for (const intersection of intersections) {
+        if (this.canPlaceWord(wordClue.word, intersection.row, intersection.col, direction)) {
+          this.placeWord(wordClue, intersection.row, intersection.col, direction);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // Check if a word intersects with existing letters
+  private wordIntersectsExisting(
+    word: string,
+    startRow: number,
+    startCol: number,
+    direction: "across" | "down"
+  ): boolean {
+    const wordUpper = word.toUpperCase();
+    for (let i = 0; i < wordUpper.length; i++) {
+      const row = direction === "across" ? startRow : startRow + i;
+      const col = direction === "across" ? startCol + i : startCol;
+      const existing = this.getGridCell(row, col);
+      if (existing !== null && existing !== undefined) {
+        return true; // Has at least one intersection
+      }
+    }
+    return false;
   }
 
   private buildState(): CrosswordState {
