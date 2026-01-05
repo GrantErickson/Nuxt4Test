@@ -7,7 +7,12 @@
       <v-chip color="amber" variant="flat" size="small"> 6×6 Puzzle </v-chip>
     </v-card-title>
 
-    <v-card-text class="pa-4">
+    <v-card-text v-if="isLoading" class="pa-4 text-center">
+      <v-progress-circular indeterminate color="indigo-darken-3" size="64" />
+      <p class="mt-4">Loading crossword puzzle...</p>
+    </v-card-text>
+
+    <v-card-text v-else class="pa-4">
       <!-- Game completed message -->
       <v-alert v-if="state.completed" type="success" class="mb-4" prominent>
         🎉 Congratulations! You completed the crossword!
@@ -189,6 +194,15 @@ import type { Clue } from "~/classes/crossword/types";
 
 // Initialize game - use shallowRef and triggerRef for proper reactivity
 const game = shallowRef(new CrosswordGame());
+const isLoading = ref(true);
+
+// Initialize the game asynchronously
+onMounted(async () => {
+  await game.value.init();
+  isLoading.value = false;
+  triggerRef(game);
+  window.addEventListener("keydown", handleKeyDown);
+});
 
 // Force Vue to re-render by triggering the ref
 function updateGame(): void {
@@ -264,8 +278,11 @@ function handleKeyClick(key: string): void {
   updateGame();
 }
 
-function newGame(): void {
-  game.value = new CrosswordGame();
+async function newGame(): Promise<void> {
+  isLoading.value = true;
+  await game.value.newGame();
+  isLoading.value = false;
+  updateGame();
 }
 
 function revealCell(): void {
@@ -300,10 +317,6 @@ function handleKeyDown(event: KeyboardEvent): void {
     updateGame();
   }
 }
-
-onMounted(() => {
-  window.addEventListener("keydown", handleKeyDown);
-});
 
 onUnmounted(() => {
   window.removeEventListener("keydown", handleKeyDown);

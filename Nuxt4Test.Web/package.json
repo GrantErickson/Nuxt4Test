@@ -11,7 +11,9 @@
     "dev": "nuxt dev",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "lint": "eslint --ext .js,.vue,.ts . --fix"
+    "lint": "eslint --ext .js,.vue,.ts . --fix",
+    "test": "vitest",
+    "test:ui": "vitest --ui"
   },
   "dependencies": {
     "@nuxt/eslint": "^1.12.1",
@@ -24,6 +26,10 @@
   },
   "devDependencies": {
     "@types/matter-js": "^0.20.2",
-    "@types/node": "^25.0.3"
+    "@types/node": "^25.0.3",
+    "@vitest/ui": "^4.0.16",
+    "@vue/test-utils": "^2.4.6",
+    "happy-dom": "^20.0.11",
+    "vitest": "^4.0.16"
   }
 }

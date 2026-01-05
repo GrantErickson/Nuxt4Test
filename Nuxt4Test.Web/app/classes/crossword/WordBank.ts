@@ -1,46 +1,70 @@
 // Word bank with clues for crossword puzzles
-// Re-exports word arrays from separate files organized by word length
+// Browser-compatible version that loads data via fetch
 import type { WordClue } from "./types";
 
-// Import word arrays from separate files
-import { threeLetterWords } from "./words3";
-import { fourLetterWords } from "./words4";
-import { fiveLetterWords } from "./words5";
-import { sixLetterWords } from "./words6";
+// Cache for loaded words
+let wordsByLength: Record<number, WordClue[]> | null = null;
+let loadingPromise: Promise<Record<number, WordClue[]>> | null = null;
 
-// Re-export word arrays for convenience
-export { threeLetterWords, fourLetterWords, fiveLetterWords, sixLetterWords };
+// Parse TSV content into words grouped by length
+function parseTsvContent(content: string): Record<number, WordClue[]> {
+  const wordsMap = new Map<number, WordClue[]>();
 
-// Get all words combined
-export function getAllWords(): WordClue[] {
-  return [
-    ...threeLetterWords,
-    ...fourLetterWords,
-    ...fiveLetterWords,
-    ...sixLetterWords,
-  ];
+  content
+    .split("\n")
+    .slice(1) // Skip the header row
+    .forEach((line) => {
+      const [word, clue] = line.split("\t");
+      if (word && clue) {
+        const length = word.length;
+        if (!wordsMap.has(length)) {
+          wordsMap.set(length, []);
+        }
+        wordsMap.get(length)!.push({ word: word.toUpperCase(), clue });
+      }
+    });
+
+  return Object.fromEntries(wordsMap);
 }
 
-// Get words by length
-export function getWordsByLength(length: number): WordClue[] {
-  switch (length) {
-    case 3:
-      return threeLetterWords;
-    case 4:
-      return fourLetterWords;
-    case 5:
-      return fiveLetterWords;
-    case 6:
-      return sixLetterWords;
-    default:
-      return [];
+// Load words from TSV file (async, cached)
+export async function loadWords(): Promise<Record<number, WordClue[]>> {
+  // Return cached data if available
+  if (wordsByLength) {
+    return wordsByLength;
   }
+
+  // Return existing promise if already loading
+  if (loadingPromise) {
+    return loadingPromise;
+  }
+
+  // Start loading
+  loadingPromise = (async () => {
+    const response = await fetch("/clues.tsv");
+    const content = await response.text();
+    wordsByLength = parseTsvContent(content);
+    return wordsByLength;
+  })();
+
+  return loadingPromise;
 }
 
-// Get a random word of a specific length
-export function getRandomWord(length: number): WordClue | null {
-  const words = getWordsByLength(length);
+// Get all words combined (async)
+export async function getAllWords(): Promise<WordClue[]> {
+  const words = await loadWords();
+  return Object.values(words).flat();
+}
+
+// Get words by length (async)
+export async function getWordsByLength(length: number): Promise<WordClue[]> {
+  const words = await loadWords();
+  return words[length] || [];
+}
+
+// Get a random word of a specific length (async)
+export async function getRandomWord(length: number): Promise<WordClue | null> {
+  const words = await getWordsByLength(length);
   if (words.length === 0) return null;
-  const word = words[Math.floor(Math.random() * words.length)];
-  return word ?? null;
+  return words[Math.floor(Math.random() * words.length)] || null;
 }

@@ -4,20 +4,43 @@ import { CrosswordGenerator } from "./CrosswordGenerator";
 
 export class CrosswordGame {
   private state: CrosswordState;
-  private generator: CrosswordGenerator;
+  private generator: CrosswordGenerator | null = null;
+  private initialized: boolean = false;
 
   constructor() {
-    this.generator = new CrosswordGenerator();
+    // Create empty default state until async init completes
+    this.state = {
+      grid: [],
+      acrossClues: [],
+      downClues: [],
+      selectedCell: null,
+      selectedDirection: "across",
+      completed: false,
+    };
+  }
+
+  // Initialize the game asynchronously
+  async init(): Promise<void> {
+    if (this.initialized) return;
+    this.generator = await CrosswordGenerator.create();
     this.state = this.generator.generate();
+    this.initialized = true;
+  }
+
+  // Static factory method to create and initialize the game
+  static async create(): Promise<CrosswordGame> {
+    const game = new CrosswordGame();
+    await game.init();
+    return game;
   }
 
   getState(): CrosswordState {
     return this.state;
   }
 
-  newGame(): void {
+  async newGame(): Promise<void> {
     // Create a fresh generator to ensure clean state
-    this.generator = new CrosswordGenerator();
+    this.generator = await CrosswordGenerator.create();
     this.state = this.generator.generate();
   }
 

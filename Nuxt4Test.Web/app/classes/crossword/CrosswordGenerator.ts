@@ -6,12 +6,26 @@ export class CrosswordGenerator {
   private gridSize: number = 6;
   private grid: (string | null)[][];
   private placedWords: PlacedWord[] = [];
-  private wordBank: WordClue[];
+  private wordBank: WordClue[] = [];
   private usedWords: Set<string> = new Set();
+  private initialized: boolean = false;
 
   constructor() {
     this.grid = this.createEmptyGrid();
-    this.wordBank = getAllWords();
+  }
+
+  // Initialize the word bank asynchronously
+  async init(): Promise<void> {
+    if (this.initialized) return;
+    this.wordBank = await getAllWords();
+    this.initialized = true;
+  }
+
+  // Static factory method to create and initialize the generator
+  static async create(): Promise<CrosswordGenerator> {
+    const generator = new CrosswordGenerator();
+    await generator.init();
+    return generator;
   }
 
   private createEmptyGrid(): (string | null)[][] {
