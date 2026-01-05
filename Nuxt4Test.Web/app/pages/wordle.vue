@@ -361,6 +361,9 @@ async function getHint(): Promise<void> {
 
 function useHint(): void {
   if (hintWord.value) {
+    // Check if current guess is empty (all blanks)
+    const wasEmpty = gameInstance.currentGuess.length === 0;
+
     // Clear current guess and type in the hint
     for (let i = 0; i < gameInstance.currentGuess.length; i++) {
       gameInstance.handleKeyPress("Backspace");
@@ -370,6 +373,11 @@ function useHint(): void {
     }
     syncState();
     showHint.value = false;
+
+    // If the guess was empty, automatically submit the word
+    if (wasEmpty) {
+      submitGuess();
+    }
   }
 }
 
