@@ -1,12 +1,12 @@
-Teaching web development in an AI world
+# Teaching web development in an AI world
+
+[Check it out here](https://agreeable-hill-0ba6d931e.2.azurestaticapps.net)
 
 This started as a test for the 2026 EWU CSCD 379 class using the latest versions of Nuxt and Vuetify. I wanted to get started refreshing my skills for teaching. However, then I started thinking about what role AI should play in the classroom. Should we just build everything from scratch? Should we build it all with AI? Should we do some kind of sybrid? 
 
 The real question is what students need to know to be successful in our new AI software development world. I wanted to really get a sense of how AI would solve the problems we are working on in the class. AI is improving all the time, and I have seen a considerable shift in the last 6 months with models getting significantly better. 
 
 Bottom line: I was able to build almost 100% of this project with AI. I did need a different set of skills. As a result, I am going to focus more on learning those key skills in this class. We will still learn how to do things by hand, but we will put significantly more emphasis on skills that make AI a more productive assistant. 
-
-[Check it out here](https://agreeable-hill-0ba6d931e.2.azurestaticapps.net)
 
 Here are the initial steps
 1. Created the project using the Nuxt command-line tools.
