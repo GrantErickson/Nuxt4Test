@@ -1,4 +1,4 @@
-# What should teaching web development look like in an AI world?
+Teaching web development in an AI world
 
 This started as a test for the 2026 EWU CSCD 379 class using the latest versions of Nuxt and Vuetify. I wanted to get started refreshing my skills for teaching. However, then I started thinking about what role AI should play in the classroom. Should we just build everything from scratch? Should we build it all with AI? Should we do some kind of sybrid? 
 
