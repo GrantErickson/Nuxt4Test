@@ -313,7 +313,7 @@ function handleKeyClick(key: string): void {
     submitGuess();
     return;
   }
-  
+
   gameInstance.handleKeyPress(key);
   syncState();
 }
@@ -323,7 +323,7 @@ function submitGuess(): void {
   if (currentGuess.value.length === 0) {
     return;
   }
-  
+
   const result = gameInstance.submitGuess();
   syncState();
 
@@ -390,13 +390,13 @@ function useHint(): void {
 
 function handleKeydown(event: KeyboardEvent): void {
   if (isLoading.value) return;
-  
+
   // Handle Enter key specially to trigger shake animation for invalid words
   if (event.key === "Enter") {
     submitGuess();
     return;
   }
-  
+
   gameInstance.handleKeyPress(event.key);
   syncState();
 }
