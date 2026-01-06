@@ -60,7 +60,11 @@
         </div>
 
         <!-- Current input row (if game not over) -->
-        <div v-if="!gameOver && guesses.length < 6" class="d-flex ga-1">
+        <div
+          v-if="!gameOver && guesses.length < 6"
+          class="d-flex ga-1"
+          :class="{ shake: shaking }"
+        >
           <div
             v-for="i in 5"
             :key="'current-' + i"
@@ -84,19 +88,6 @@
           />
         </div>
       </div>
-
-      <!-- Error message -->
-      <v-alert
-        v-if="errorMessage"
-        type="error"
-        variant="tonal"
-        density="compact"
-        class="mb-4"
-        closable
-        @click:close="clearError"
-      >
-        {{ errorMessage }}
-      </v-alert>
 
       <!-- Game over message -->
       <div v-if="gameOver" class="text-center">
@@ -265,6 +256,9 @@ const showHint = ref(false);
 const hintLoading = ref(false);
 const possibleWordsCount = ref(0);
 
+// Shake animation state
+const shaking = ref(false);
+
 // Loading state for API call
 const isLoading = ref(true);
 const apiError = ref<string | null>(null);
@@ -314,13 +308,39 @@ function getKeyClass(key: string): string {
 }
 
 function handleKeyClick(key: string): void {
+  // Handle Enter key specially to trigger shake animation for invalid words
+  if (key === "ENTER") {
+    submitGuess();
+    return;
+  }
+  
   gameInstance.handleKeyPress(key);
   syncState();
 }
 
 function submitGuess(): void {
-  gameInstance.submitGuess();
+  // Don't do anything if no characters entered
+  if (currentGuess.value.length === 0) {
+    return;
+  }
+  
+  const result = gameInstance.submitGuess();
   syncState();
+
+  // If the guess was invalid, shake the row
+  if (!result.success && result.errorMessage) {
+    // Reset to false first to ensure animation restarts
+    shaking.value = false;
+    // Use nextTick to ensure Vue updates the DOM before setting to true
+    nextTick(() => {
+      shaking.value = true;
+      setTimeout(() => {
+        shaking.value = false;
+      }, 500);
+    });
+    return;
+  }
+
   // Clear hint when a guess is submitted
   showHint.value = false;
   hintWord.value = null;
@@ -370,6 +390,13 @@ function useHint(): void {
 
 function handleKeydown(event: KeyboardEvent): void {
   if (isLoading.value) return;
+  
+  // Handle Enter key specially to trigger shake animation for invalid words
+  if (event.key === "Enter") {
+    submitGuess();
+    return;
+  }
+  
   gameInstance.handleKeyPress(event.key);
   syncState();
 }
@@ -511,5 +538,30 @@ onUnmounted(() => {
 
 .keyboard-key.special-key:hover {
   background-color: #9ca3af;
+}
+
+/* Shake animation for invalid words */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-4px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+.shake {
+  animation: shake 0.5s ease-in-out;
 }
 </style>
