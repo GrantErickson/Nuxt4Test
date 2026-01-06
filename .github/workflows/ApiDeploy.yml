@@ -9,6 +9,7 @@ on:
       - main
     paths:
       - "Nuxt4Test.Api/**"
+      - "Nuxt4Test.Api.Tests/**"
   workflow_dispatch:
 
 jobs:
@@ -67,3 +68,4 @@ jobs:
           app-name: "Nuxt4Test"
           slot-name: "Production"
           package: .
+
