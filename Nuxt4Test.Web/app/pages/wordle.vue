@@ -117,21 +117,52 @@
         {{ errorMessage }}
       </v-alert>
 
-      <!-- Submit button -->
-      <v-btn
-        v-if="!gameOver && !isLoading"
-        block
-        color="green-darken-3"
-        size="large"
-        :disabled="currentGuess.length !== 5"
-        class="mb-2"
-        @click="submitGuess"
-      >
-        Submit Guess (or press Enter)
-      </v-btn>
+      <!-- Game over message -->
+      <div v-if="gameOver" class="text-center">
+        <v-alert :type="won ? 'success' : 'error'" class="mb-4">
+          <template v-if="won">
+            🎉 Congratulations! You guessed the word in {{ guesses.length }}
+            {{ guesses.length === 1 ? "try" : "tries" }}!
+          </template>
+          <template v-else>
+            Game Over! The word was:
+            <strong>{{ targetWord.toUpperCase() }}</strong>
+          </template>
+        </v-alert>
+        <v-btn color="primary" @click="resetGame">Play Again</v-btn>
+      </div>
+    </v-card-text>
+
+    <!-- On-screen Keyboard -->
+    <v-card-text class="bg-grey-lighten-3 pa-4">
+      <div class="d-flex flex-column align-center ga-1">
+        <div
+          v-for="(row, rowIndex) in keyboardRows"
+          :key="rowIndex"
+          class="d-flex ga-1"
+        >
+          <button
+            v-for="key in row"
+            :key="key"
+            class="keyboard-key d-flex align-center justify-center font-weight-bold"
+            :class="getKeyClass(key)"
+            @click="handleKeyClick(key)"
+          >
+            <template v-if="key === 'ENTER'">
+              <v-icon size="small">mdi-keyboard-return</v-icon>
+            </template>
+            <template v-else-if="key === 'BACK'">
+              <v-icon size="small">mdi-backspace-outline</v-icon>
+            </template>
+            <template v-else>
+              {{ key }}
+            </template>
+          </button>
+        </div>
+      </div>
 
       <!-- Hint section -->
-      <div v-if="!gameOver && !isLoading" class="mb-4">
+      <div v-if="!gameOver && !isLoading" class="mt-4">
         <v-btn
           block
           variant="outlined"
@@ -183,58 +214,6 @@
         >
           No valid words found. Check your guesses!
         </v-alert>
-      </div>
-
-      <!-- Game over message -->
-      <div v-if="gameOver" class="text-center">
-        <v-alert :type="won ? 'success' : 'error'" class="mb-4">
-          <template v-if="won">
-            🎉 Congratulations! You guessed the word in {{ guesses.length }}
-            {{ guesses.length === 1 ? "try" : "tries" }}!
-          </template>
-          <template v-else>
-            Game Over! The word was:
-            <strong>{{ targetWord.toUpperCase() }}</strong>
-          </template>
-        </v-alert>
-        <v-btn color="primary" @click="resetGame">Play Again</v-btn>
-      </div>
-
-      <!-- Instructions -->
-      <div
-        v-if="!gameOver && !isLoading"
-        class="text-center text-caption text-grey mt-2"
-      >
-        Type letters to fill the grid. Press Backspace to delete.
-      </div>
-    </v-card-text>
-
-    <!-- On-screen Keyboard -->
-    <v-card-text class="bg-grey-lighten-3 pa-4">
-      <div class="d-flex flex-column align-center ga-1">
-        <div
-          v-for="(row, rowIndex) in keyboardRows"
-          :key="rowIndex"
-          class="d-flex ga-1"
-        >
-          <button
-            v-for="key in row"
-            :key="key"
-            class="keyboard-key d-flex align-center justify-center font-weight-bold"
-            :class="getKeyClass(key)"
-            @click="handleKeyClick(key)"
-          >
-            <template v-if="key === 'ENTER'">
-              <v-icon size="small">mdi-keyboard-return</v-icon>
-            </template>
-            <template v-else-if="key === 'BACK'">
-              <v-icon size="small">mdi-backspace-outline</v-icon>
-            </template>
-            <template v-else>
-              {{ key }}
-            </template>
-          </button>
-        </div>
       </div>
     </v-card-text>
 

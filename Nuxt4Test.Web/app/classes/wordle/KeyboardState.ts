@@ -46,7 +46,10 @@ export class KeyboardState {
    * Get CSS class for a keyboard key
    */
   getKeyClass(key: string): string {
-    if (key === "ENTER" || key === "BACK") {
+    if (key === "ENTER") {
+      return "special-key bg-green-darken-2 text-white";
+    }
+    if (key === "BACK") {
       return "special-key";
     }
 
