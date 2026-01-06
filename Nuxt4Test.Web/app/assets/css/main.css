@@ -1,0 +1,4 @@
+/* Disable double-tap zoom on touch devices */
+* {
+  touch-action: manipulation;
+}
