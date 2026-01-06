@@ -1,28 +1,74 @@
 <template>
   <v-card>
-    <v-card-title class="bg-blue-lighten-3">
-      Nuxt 4 + Vuetify 3 + TypeScript
-    </v-card-title>
+    <v-card-title class="bg-blue-lighten-3">Games</v-card-title>
     <v-card-text class="pt-4">
-      <v-chip color="purple">{{ count }}</v-chip>
+      <v-list>
+        <v-list-item
+          v-for="game in games"
+          :key="game.route"
+          :to="game.route"
+          :prepend-icon="game.icon"
+        >
+          <v-list-item-title
+            >{{ game.emoji }} {{ game.name }}</v-list-item-title
+          >
+          <v-list-item-subtitle>{{ game.description }}</v-list-item-subtitle>
+        </v-list-item>
+      </v-list>
     </v-card-text>
-    <v-card-actions class="bg-blue">
-      <v-btn variant="flat" color="red-darken-4" @click="down">Down</v-btn>
-      <v-btn variant="flat" color="green-darken-4" @click="up">Up</v-btn>
-    </v-card-actions>
   </v-card>
 </template>
 
 <script setup lang="ts">
-const count = ref(0);
-
-function up() {
-  if (count.value < 9) count.value++;
-  else count.value = 0;
-}
-
-function down() {
-  if (count.value <= 0) count.value = 9;
-  else count.value--;
-}
+const games = [
+  {
+    name: "Wordle",
+    emoji: "🔤",
+    route: "/wordle",
+    icon: "mdi-alphabetical",
+    description: "Guess the 5-letter word in 6 tries",
+  },
+  {
+    name: "Crossword",
+    emoji: "📝",
+    route: "/crossword",
+    icon: "mdi-grid",
+    description: "Fill in the crossword puzzle",
+  },
+  {
+    name: "Bear Patrol",
+    emoji: "🏕️",
+    route: "/minesweeper",
+    icon: "mdi-mine",
+    description: "Find the bears without getting caught",
+  },
+  {
+    name: "Mastermind",
+    emoji: "🎯",
+    route: "/mastermind",
+    icon: "mdi-bullseye",
+    description: "Crack the color code",
+  },
+  {
+    name: "Thermal Hunt",
+    emoji: "🌡️",
+    route: "/thermalhunt",
+    icon: "mdi-thermometer",
+    description: "Find the hidden target using hot/cold clues",
+  },
+  {
+    name: "Cavern",
+    emoji: "🏔️",
+    route: "/cavern",
+    icon: "mdi-tunnel",
+    description: "Explore the cavern",
+  },
+  {
+    name: "Physics",
+    emoji: "🎱",
+    route: "/physics",
+    icon: "mdi-billiards",
+    description: "Physics simulation playground",
+  },
+];
 </script>
