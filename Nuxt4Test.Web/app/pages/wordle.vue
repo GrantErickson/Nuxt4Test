@@ -8,31 +8,12 @@
         :color="gameMode === 'daily' ? 'yellow-darken-2' : 'blue-grey'"
         size="small"
         variant="flat"
+        style="cursor: pointer"
+        @click="toggleGameMode"
       >
         {{ gameMode === "daily" ? "📅 Daily" : "🎲 Random" }}
       </v-chip>
     </v-card-title>
-
-    <!-- Game Mode Selector -->
-    <v-card-text class="bg-grey-lighten-4 py-3">
-      <v-btn-toggle
-        v-model="gameMode"
-        mandatory
-        color="green-darken-3"
-        density="compact"
-        class="d-flex"
-        @update:model-value="onGameModeChange"
-      >
-        <v-btn value="daily" class="flex-grow-1">
-          <v-icon start>mdi-calendar-today</v-icon>
-          Word of the Day
-        </v-btn>
-        <v-btn value="random" class="flex-grow-1">
-          <v-icon start>mdi-shuffle-variant</v-icon>
-          Random Word
-        </v-btn>
-      </v-btn-toggle>
-    </v-card-text>
 
     <v-card-text class="pa-6">
       <!-- Loading state -->
@@ -255,6 +236,28 @@ const hintSolver = new HintSolver(wordList);
 // Game mode: 'daily' for word of the day, 'random' for random word
 type GameMode = "daily" | "random";
 const gameMode = ref<GameMode>("daily");
+const dailyPlayedToday = ref(false);
+
+// Get today's date key for localStorage
+function getTodayKey(): string {
+  const today = new Date();
+  return `wordle-daily-${today.getFullYear()}-${
+    today.getMonth() + 1
+  }-${today.getDate()}`;
+}
+
+// Check if daily was already played today
+function checkDailyPlayed(): boolean {
+  if (typeof localStorage === "undefined") return false;
+  return localStorage.getItem(getTodayKey()) === "played";
+}
+
+// Mark daily as played today
+function markDailyPlayed(): void {
+  if (typeof localStorage === "undefined") return;
+  localStorage.setItem(getTodayKey(), "played");
+  dailyPlayedToday.value = true;
+}
 
 // Hint state
 const hintWord = ref<string | null>(null);
@@ -321,6 +324,11 @@ function submitGuess(): void {
   // Clear hint when a guess is submitted
   showHint.value = false;
   hintWord.value = null;
+
+  // If game ended and it was daily mode, mark as played
+  if (gameOver.value && gameMode.value === "daily") {
+    markDailyPlayed();
+  }
 }
 
 async function getHint(): Promise<void> {
@@ -394,6 +402,11 @@ async function resetGame(): Promise<void> {
   showHint.value = false;
   hintWord.value = null;
 
+  // If daily was already played today, switch to random mode
+  if (gameMode.value === "daily" && checkDailyPlayed()) {
+    gameMode.value = "random";
+  }
+
   if (gameMode.value === "daily") {
     const word = await fetchWordOfTheDay();
     if (word) {
@@ -411,7 +424,8 @@ async function resetGame(): Promise<void> {
   syncState();
 }
 
-async function onGameModeChange(): Promise<void> {
+async function toggleGameMode(): Promise<void> {
+  gameMode.value = gameMode.value === "daily" ? "random" : "daily";
   await resetGame();
 }
 
@@ -423,6 +437,13 @@ function clearError(): void {
 // Initialize game on mount and add keyboard listener
 onMounted(async () => {
   window.addEventListener("keydown", handleKeydown);
+
+  // Check if daily was already played today
+  dailyPlayedToday.value = checkDailyPlayed();
+  if (dailyPlayedToday.value) {
+    gameMode.value = "random";
+  }
+
   await resetGame();
 });
 
