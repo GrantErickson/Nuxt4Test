@@ -29,6 +29,13 @@ const games = [
     description: "Guess the 5-letter word in 6 tries",
   },
   {
+    name: "HexLink",
+    emoji: "⬡",
+    route: "/hexlink",
+    icon: "mdi-hexagon-multiple",
+    description: "Connect hex tiles to build the longest chain",
+  },
+  {
     name: "Crossword",
     emoji: "📝",
     route: "/crossword",
