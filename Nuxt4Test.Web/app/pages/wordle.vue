@@ -42,52 +42,14 @@
       </v-alert>
 
       <!-- Guesses grid -->
-      <div v-if="!isLoading" class="d-flex flex-column align-center ga-2 mb-4">
-        <!-- Submitted guesses -->
-        <div
-          v-for="(guess, guessIndex) in guesses"
-          :key="guessIndex"
-          class="d-flex ga-1"
-        >
-          <div
-            v-for="(letter, letterIndex) in guess.letters"
-            :key="letterIndex"
-            class="letter-box d-flex align-center justify-center text-h5 font-weight-bold"
-            :class="getLetterClass(letter, letterIndex, guess.word)"
-          >
-            {{ letter.toUpperCase() }}
-          </div>
-        </div>
-
-        <!-- Current input row (if game not over) -->
-        <div
-          v-if="!gameOver && guesses.length < 6"
-          class="d-flex ga-1"
-          :class="{ shake: shaking }"
-        >
-          <div
-            v-for="i in 5"
-            :key="'current-' + i"
-            class="letter-box current d-flex align-center justify-center text-h5 font-weight-bold"
-            :class="{ 'has-letter': currentGuess[i - 1] }"
-          >
-            {{ currentGuess[i - 1]?.toUpperCase() || "" }}
-          </div>
-        </div>
-
-        <!-- Empty rows for remaining guesses -->
-        <div
-          v-for="emptyRow in emptyRowCount"
-          :key="'empty-' + emptyRow"
-          class="d-flex ga-1"
-        >
-          <div
-            v-for="i in 5"
-            :key="i"
-            class="letter-box empty d-flex align-center justify-center"
-          />
-        </div>
-      </div>
+      <WordleGrid
+        v-if="!isLoading"
+        :guesses="guesses"
+        :current-guess="currentGuess"
+        :game-over="gameOver"
+        :shaking="shaking"
+        :get-letter-class="getLetterClass"
+      />
 
       <!-- Game over message -->
       <div v-if="gameOver" class="text-center">
@@ -107,112 +69,33 @@
 
     <!-- On-screen Keyboard -->
     <v-card-text class="bg-grey-lighten-3 pa-4">
-      <div class="d-flex flex-column align-center ga-1">
-        <div
-          v-for="(row, rowIndex) in keyboardRows"
-          :key="rowIndex"
-          class="d-flex ga-1"
-        >
-          <button
-            v-for="key in row"
-            :key="key"
-            class="keyboard-key d-flex align-center justify-center font-weight-bold"
-            :class="getKeyClass(key)"
-            @click="handleKeyClick(key)"
-          >
-            <template v-if="key === 'ENTER'">
-              <v-icon size="small">mdi-keyboard-return</v-icon>
-            </template>
-            <template v-else-if="key === 'BACK'">
-              <v-icon size="small">mdi-backspace-outline</v-icon>
-            </template>
-            <template v-else>
-              {{ key }}
-            </template>
-          </button>
-        </div>
-      </div>
+      <WordleKeyboard
+        :get-key-class="getKeyClass"
+        @key-click="handleKeyClick"
+      />
 
       <!-- Hint section -->
-      <div v-if="!gameOver && !isLoading" class="mt-4">
-        <v-btn
-          block
-          variant="outlined"
-          color="blue-darken-2"
-          size="large"
-          class="mb-2"
-          :loading="hintLoading"
-          :disabled="hintLoading"
-          @click="getHint"
-        >
-          <v-icon start>mdi-lightbulb-outline</v-icon>
-          Get Hint
-        </v-btn>
-
-        <v-alert
-          v-if="showHint && hintWord"
-          type="info"
-          variant="tonal"
-          density="compact"
-        >
-          <div class="d-flex align-center justify-space-between">
-            <div>
-              <strong>Suggested word:</strong>
-              <span class="text-h6 ml-2 font-weight-bold">{{
-                hintWord.toUpperCase()
-              }}</span>
-            </div>
-            <v-btn
-              size="small"
-              variant="elevated"
-              color="green-darken-2"
-              class="ml-2"
-              @click="useHint"
-            >
-              <v-icon start size="small">mdi-check-circle</v-icon>
-              Use it
-            </v-btn>
-          </div>
-          <div class="text-caption mt-1">
-            {{ possibleWordsCount }} possible words remaining
-          </div>
-        </v-alert>
-
-        <v-alert
-          v-if="showHint && !hintWord"
-          type="warning"
-          variant="tonal"
-          density="compact"
-        >
-          No valid words found. Check your guesses!
-        </v-alert>
-      </div>
+      <WordleHint
+        v-if="!gameOver && !isLoading"
+        :loading="hintLoading"
+        :show-hint="showHint"
+        :hint-word="hintWord"
+        :possible-words-count="possibleWordsCount"
+        @get-hint="getHint"
+        @use-hint="useHint"
+      />
     </v-card-text>
 
     <!-- Legend -->
     <v-card-text class="bg-grey-lighten-4">
-      <div class="text-subtitle-2 mb-2">Legend:</div>
-      <div class="d-flex ga-4 flex-wrap">
-        <div class="d-flex align-center ga-2">
-          <div class="legend-box bg-green text-white">A</div>
-          <span>Correct letter & position</span>
-        </div>
-        <div class="d-flex align-center ga-2">
-          <div class="legend-box bg-yellow-darken-2 text-white">B</div>
-          <span>Correct letter, wrong position</span>
-        </div>
-        <div class="d-flex align-center ga-2">
-          <div class="legend-box bg-grey-darken-1 text-white">C</div>
-          <span>Letter not in word</span>
-        </div>
-      </div>
+      <WordleLegend />
     </v-card-text>
   </v-card>
 </template>
 
 <script setup lang="ts">
 import wordListText from "~/data/words.txt?raw";
-import { WordleGame, HintSolver, KEYBOARD_ROWS } from "~/classes/wordle";
+import { WordleGame, HintSolver } from "~/classes/wordle";
 
 // Initialize game instance
 const gameInstance = new WordleGame(wordListText);
@@ -269,10 +152,6 @@ const currentGuess = ref(gameInstance.currentGuess);
 const guesses = ref(gameInstance.guesses);
 const gameOver = ref(gameInstance.gameOver);
 const won = ref(gameInstance.won);
-const errorMessage = ref(gameInstance.errorMessage);
-
-// Keyboard layout from constants
-const keyboardRows = KEYBOARD_ROWS;
 
 // Version counter to force re-render of keyboard
 const stateVersion = ref(0);
@@ -285,17 +164,9 @@ function syncState(): void {
   guesses.value = state.guesses;
   gameOver.value = state.gameOver;
   won.value = state.won;
-  errorMessage.value = state.errorMessage;
   // Increment to trigger keyboard re-render
   stateVersion.value++;
 }
-
-// Calculate empty rows (excluding current input row)
-const emptyRowCount = computed(() => {
-  const submitted = guesses.value.length;
-  const currentRow = gameOver.value ? 0 : 1;
-  return Math.max(0, 6 - submitted - currentRow);
-});
 
 function getLetterClass(letter: string, index: number, word: string): string {
   return gameInstance.getLetterClass(letter, index, word);
@@ -456,11 +327,6 @@ async function toggleGameMode(): Promise<void> {
   await resetGame();
 }
 
-function clearError(): void {
-  gameInstance.clearError();
-  syncState();
-}
-
 // Initialize game on mount and add keyboard listener
 onMounted(async () => {
   window.addEventListener("keydown", handleKeydown);
@@ -479,89 +345,3 @@ onUnmounted(() => {
   window.removeEventListener("keydown", handleKeydown);
 });
 </script>
-
-<style scoped>
-.letter-box {
-  width: 56px;
-  height: 56px;
-  border: 2px solid #ccc;
-  border-radius: 4px;
-}
-
-.letter-box.empty {
-  background-color: #f5f5f5;
-}
-
-.letter-box.current {
-  border-color: #888;
-  background-color: #fff;
-}
-
-.letter-box.current.has-letter {
-  border-color: #333;
-}
-
-.legend-box {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  font-weight: bold;
-}
-
-/* Keyboard styles */
-.keyboard-key {
-  min-width: 36px;
-  height: 50px;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.1s ease;
-  text-transform: uppercase;
-}
-
-.keyboard-key:hover {
-  opacity: 0.8;
-}
-
-.keyboard-key:active {
-  transform: scale(0.95);
-}
-
-.keyboard-key.special-key {
-  min-width: 56px;
-  background-color: #d1d5db;
-}
-
-.keyboard-key.special-key:hover {
-  background-color: #9ca3af;
-}
-
-/* Shake animation for invalid words */
-@keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  10%,
-  30%,
-  50%,
-  70%,
-  90% {
-    transform: translateX(-4px);
-  }
-  20%,
-  40%,
-  60%,
-  80% {
-    transform: translateX(4px);
-  }
-}
-
-.shake {
-  animation: shake 0.5s ease-in-out;
-}
-</style>
