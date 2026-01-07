@@ -2,13 +2,7 @@
   <div class="hexlink-page">
     <!-- Home button -->
     <div class="top-nav">
-      <v-btn
-        icon
-        variant="text"
-        size="small"
-        to="/"
-        class="home-btn"
-      >
+      <v-btn icon variant="text" size="small" to="/" class="home-btn">
         <v-icon>mdi-home</v-icon>
       </v-btn>
     </div>
@@ -309,11 +303,11 @@ function resetGame() {
   .hexlink-page {
     padding: 16px;
   }
-  
+
   .board-title {
     font-size: 1.5rem;
   }
-  
+
   .board-score {
     font-size: 1rem;
   }

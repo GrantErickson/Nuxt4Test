@@ -35,10 +35,10 @@ const emit = defineEmits<{
 function handleTileClick(index: number) {
   if (props.selectedIndex === index) {
     // Already selected - rotate it
-    emit('rotate', index);
+    emit("rotate", index);
   } else {
     // Select this tile
-    emit('select', index);
+    emit("select", index);
   }
 }
 </script>
