@@ -1,5 +1,9 @@
 <template>
   <div class="hex-board" :style="boardStyle">
+    <div class="board-header-overlay">
+      <span class="board-title">HexLink</span>
+      <span class="board-score">Score: {{ score }}</span>
+    </div>
     <!-- Base layer: tiles without edge indicators -->
     <div
       v-for="pos in allPositions"
@@ -61,6 +65,7 @@ const props = defineProps<{
   connectedPaths: Set<string>;
   longestChainPaths: Set<string>;
   hexSize?: number;
+  score: number;
 }>();
 
 const emit = defineEmits<{
@@ -89,7 +94,7 @@ const boardSize = computed(() => {
   // Need symmetric padding for edge indicators (circles extend ~5px beyond hex edge)
   const cols = 7;
   const rows = 7;
-  const padding = 40; // padding on each side
+  const padding = 15; // padding on each side
   return {
     width: r * 1.5 * (cols - 1) + r * 2 + padding * 2,
     height: r * Math.sqrt(3) * rows + padding * 2,
@@ -165,5 +170,45 @@ function handleCellClick(pos: HexPosition) {
 
 .hex-cell:hover {
   z-index: 100 !important;
+}
+
+.board-header-overlay {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  z-index: 60; /* Above base layer (1) and indicators (50) */
+  pointer-events: none;
+}
+
+.board-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #64b5f6 0%, #ce93d8 50%, #ffb74d 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+  letter-spacing: 0.05em;
+}
+
+.board-score {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #4fc3f7;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+@media (min-width: 600px) {
+  .board-title {
+    font-size: 1.5rem;
+  }
+
+  .board-score {
+    font-size: 1rem;
+  }
 }
 </style>

@@ -1,24 +1,14 @@
 <template>
   <div class="hexlink-page">
-    <!-- Home button -->
-    <div class="top-nav">
-      <v-btn icon variant="text" size="small" to="/" class="home-btn">
-        <v-icon>mdi-home</v-icon>
-      </v-btn>
-    </div>
-
     <!-- Game Board with overlaid title and score -->
     <div class="board-container">
-      <div class="board-header">
-        <span class="board-title">HexLink</span>
-        <span class="board-score">Score: {{ gameState.score }}</span>
-      </div>
       <HexBoard
         :placed-tiles="placedTiles"
         :valid-placements="validPlacements"
         :connected-paths="connectedPaths"
         :longest-chain-paths="longestChainPaths"
         :hex-size="hexSize"
+        :score="gameState.score"
         @cell-click="handleCellClick"
       />
     </div>
@@ -170,16 +160,25 @@ function updateGameState() {
 function updateSizes() {
   // Adjust hex size based on screen width
   const width = window.innerWidth;
-  if (width < 600) {
-    hexSize.value = 45;
-    tileSize.value = 50;
-  } else if (width < 900) {
-    hexSize.value = 52;
-    tileSize.value = 65;
-  } else {
-    hexSize.value = 60;
-    tileSize.value = 80;
-  }
+  
+  // Calculate max possible hex size to fit width
+  // Board width formula from HexBoard: 11*r + 30 (padding)
+  // r = hexSize/2 - 2
+  // So width = 11*(hexSize/2 - 2) + 30
+  // width - 30 = 11*(hexSize/2 - 2)
+  // (width - 30)/11 = hexSize/2 - 2
+  // hexSize = 2 * ((width - 30)/11 + 2)
+  
+  // We want some page padding too (e.g. 16px total)
+  const availableWidth = width - 16;
+  const maxHexSize = 2 * ((availableWidth - 30) / 11 + 2);
+
+  // Cap at 60 (desktop size) or calculated size
+  hexSize.value = Math.min(60, Math.floor(maxHexSize));
+  
+  // Update tile size for hand relative to hex size
+  // Keep it slightly larger than hex size
+  tileSize.value = Math.min(80, Math.floor(hexSize.value * 1.3));
 }
 
 function selectTile(index: number) {
@@ -228,66 +227,30 @@ function resetGame() {
   padding: 8px;
   box-sizing: border-box;
   overflow-x: hidden;
-}
-
-.top-nav {
   width: 100%;
-  display: flex;
-  justify-content: flex-start;
-  padding: 4px 8px;
-  margin-bottom: 4px;
 }
 
-.home-btn {
-  color: #aaa;
-}
 
-.home-btn:hover {
-  color: #fff;
-}
 
 .board-container {
   position: relative;
   display: flex;
   justify-content: center;
-  margin-left: -40px;
+  width: 100%;
+  max-width: 100vw;
+  padding: 0 8px;
+  box-sizing: border-box;
 }
 
-.board-header {
-  position: absolute;
-  top: 12px;
-  left: 16px;
-  right: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  z-index: 100;
-  pointer-events: none;
-}
 
-.board-title {
-  font-size: 1.25rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, #64b5f6 0%, #ce93d8 50%, #ffb74d 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
-  letter-spacing: 0.05em;
-}
-
-.board-score {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #4fc3f7;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-}
 
 .controls-container {
   display: flex;
   justify-content: center;
   margin: 8px 0;
-  margin-left: -40px;
+  width: 100%;
+  padding: 0 8px;
+  box-sizing: border-box;
 }
 
 .instructions-container,
@@ -304,12 +267,6 @@ function resetGame() {
     padding: 16px;
   }
 
-  .board-title {
-    font-size: 1.5rem;
-  }
 
-  .board-score {
-    font-size: 1rem;
-  }
 }
 </style>
