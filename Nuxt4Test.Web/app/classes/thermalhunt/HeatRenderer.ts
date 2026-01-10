@@ -73,13 +73,18 @@ export class HeatRenderer {
   }
 
   /**
-   * Get cell content (just show star for target, empty otherwise)
+   * Get cell content - shows distance number when revealed, star for target
    */
   getCellContent(cell: Cell | undefined, isGameOver: boolean): string {
     if (!cell) return "";
 
     if (cell.isTarget && (cell.isRevealed || isGameOver)) {
       return "⭐";
+    }
+
+    // Show distance number when cell is revealed (clicked by user)
+    if (cell.isRevealed && cell.isClicked) {
+      return cell.distance.toString();
     }
 
     return "";
