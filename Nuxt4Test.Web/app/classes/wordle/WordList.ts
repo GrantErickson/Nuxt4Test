@@ -1,16 +1,30 @@
 import { WORD_LENGTH } from "./types";
 
 /**
- * Manages the word list for Wordle game.
- * Handles loading, validation, and random word selection.
+ * Manages the word lists for Wordle game.
+ * Uses a smaller list of common words for target selection,
+ * and a larger list of all valid words for guess validation.
  */
 export class WordList {
-  private words: string[];
+  /** Common words used for selecting the target/hidden word */
+  private targetWords: string[];
+  /** All valid words that can be guessed (includes target words) */
   private validWordsSet: Set<string>;
 
-  constructor(rawWordList: string) {
-    this.words = this.parseWordList(rawWordList);
-    this.validWordsSet = new Set(this.words);
+  /**
+   * @param targetWordList - Raw text of common words (one per line) used for target selection
+   * @param validGuessesText - Optional raw text of all valid guesses. If not provided, uses targetWordList.
+   */
+  constructor(targetWordList: string, validGuessesText?: string) {
+    this.targetWords = this.parseWordList(targetWordList);
+    
+    // Build valid words set from both lists
+    const validGuesses = validGuessesText 
+      ? this.parseWordList(validGuessesText)
+      : [];
+    
+    // Combine target words and valid guesses into the valid set
+    this.validWordsSet = new Set([...this.targetWords, ...validGuesses]);
   }
 
   /**
@@ -24,24 +38,45 @@ export class WordList {
   }
 
   /**
-   * Check if a word is valid (exists in word list)
+   * Check if a word is valid (exists in valid words set)
    */
   isValidWord(word: string): boolean {
     return this.validWordsSet.has(word.toLowerCase());
   }
 
   /**
-   * Get a random word from the list
+   * Get a random word from the target words list (common words only)
    */
   getRandomWord(): string {
-    const index = Math.floor(Math.random() * this.words.length);
-    return this.words[index] ?? this.words[0] ?? "apple";
+    const index = Math.floor(Math.random() * this.targetWords.length);
+    return this.targetWords[index] ?? this.targetWords[0] ?? "apple";
   }
 
   /**
-   * Get total count of words in the list
+   * Get total count of target words
    */
   get count(): number {
-    return this.words.length;
+    return this.targetWords.length;
+  }
+
+  /**
+   * Get total count of valid guessable words
+   */
+  get validWordCount(): number {
+    return this.validWordsSet.size;
+  }
+
+  /**
+   * Get all valid words as an array (for hint solver)
+   */
+  getAllValidWords(): string[] {
+    return Array.from(this.validWordsSet);
+  }
+
+  /**
+   * Get target words array (common words only, for hint solver)
+   */
+  getTargetWords(): string[] {
+    return [...this.targetWords];
   }
 }

@@ -36,10 +36,28 @@ export class WordleGame {
   private _won: boolean = false;
   private _errorMessage: string = "";
 
-  constructor(wordListText: string) {
-    this.wordList = new WordList(wordListText);
+  /**
+   * @param targetWordsText - Common words text for selecting hidden word
+   * @param validGuessesText - Optional extended word list for valid guesses
+   */
+  constructor(targetWordsText: string, validGuessesText?: string) {
+    this.wordList = new WordList(targetWordsText, validGuessesText);
     this.keyboardState = new KeyboardState();
     this.reset();
+  }
+
+  /**
+   * Get all valid words (for hint solver)
+   */
+  getAllValidWords(): string[] {
+    return this.wordList.getAllValidWords();
+  }
+
+  /**
+   * Get target words only (common words for hints)
+   */
+  getTargetWords(): string[] {
+    return this.wordList.getTargetWords();
   }
 
   // Getters for reactive state

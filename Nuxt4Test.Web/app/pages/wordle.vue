@@ -95,17 +95,14 @@
 
 <script setup lang="ts">
 import wordListText from "~/data/words.txt?raw";
+import validGuessesText from "~/data/valid-guesses.txt?raw";
 import { WordleGame, HintSolver } from "~/classes/wordle";
 
-// Initialize game instance
-const gameInstance = new WordleGame(wordListText);
+// Initialize game instance with common words for targets and full list for valid guesses
+const gameInstance = new WordleGame(wordListText, validGuessesText);
 
-// Initialize hint solver with word list
-const wordList = wordListText
-  .split("\n")
-  .map((w) => w.trim().toLowerCase())
-  .filter((w) => w.length === 5);
-const hintSolver = new HintSolver(wordList);
+// Initialize hint solver with target words only (common words that could be the answer)
+const hintSolver = new HintSolver(gameInstance.getTargetWords());
 
 // Game mode: 'daily' for word of the day, 'random' for random word
 type GameMode = "daily" | "random";
