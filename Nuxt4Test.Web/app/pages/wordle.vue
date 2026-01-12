@@ -63,6 +63,29 @@
             <strong>{{ targetWord.toUpperCase() }}</strong>
           </template>
         </v-alert>
+
+        <!-- Word definition -->
+        <v-card v-if="definitionLoading || wordDefinitions.length > 0" variant="tonal" class="mb-4 text-left">
+          <v-card-text>
+            <div class="d-flex align-center mb-1">
+              <strong class="text-h6">{{ targetWord.toUpperCase() }}</strong>
+              <v-progress-circular
+                v-if="definitionLoading"
+                indeterminate
+                size="16"
+                width="2"
+                class="ml-2"
+              />
+            </div>
+            <div v-if="wordDefinitions.length > 0">
+              <p v-for="(def, index) in wordDefinitions" :key="index" class="text-body-2 mb-1">
+                {{ index + 1 }}. {{ def }}
+              </p>
+            </div>
+            <p v-else-if="!definitionLoading" class="text-body-2 text-grey mb-0">Definition not available</p>
+          </v-card-text>
+        </v-card>
+
         <v-btn color="primary" @click="resetGame">Play Again</v-btn>
       </div>
     </v-card-text>
@@ -142,6 +165,10 @@ const shaking = ref(false);
 // Loading state for API call
 const isLoading = ref(true);
 const apiError = ref<string | null>(null);
+
+// Word definition state
+const wordDefinitions = ref<string[]>([]);
+const definitionLoading = ref(false);
 
 // Reactive state - we use refs that sync with the game instance
 const targetWord = ref(gameInstance.targetWord);
@@ -272,6 +299,48 @@ function handleKeydown(event: KeyboardEvent): void {
 // Get runtime config for API base URL
 const config = useRuntimeConfig();
 
+/**
+ * Fetch word definition from Free Dictionary API
+ */
+async function fetchWordDefinition(word: string): Promise<void> {
+  definitionLoading.value = true;
+  wordDefinitions.value = [];
+  try {
+    const response = await fetch(
+      `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`
+    );
+    if (response.ok) {
+      const data = await response.json();
+      const definitions: string[] = [];
+      
+      // Collect up to 3 definitions from different meanings
+      for (const entry of data) {
+        for (const meaning of entry.meanings || []) {
+          for (const def of meaning.definitions || []) {
+            if (def.definition && definitions.length < 3) {
+              const partOfSpeech = meaning.partOfSpeech || '';
+              definitions.push(
+                partOfSpeech 
+                  ? `(${partOfSpeech}) ${def.definition}`
+                  : def.definition
+              );
+            }
+            if (definitions.length >= 3) break;
+          }
+          if (definitions.length >= 3) break;
+        }
+        if (definitions.length >= 3) break;
+      }
+      
+      wordDefinitions.value = definitions;
+    }
+  } catch (error) {
+    console.error("Failed to fetch word definition:", error);
+  } finally {
+    definitionLoading.value = false;
+  }
+}
+
 async function fetchWordOfTheDay(): Promise<string | null> {
   try {
     // In development, use the proxy (/api/). In production, use the configured API base URL.
@@ -296,6 +365,7 @@ async function resetGame(): Promise<void> {
   apiError.value = null;
   showHint.value = false;
   hintWord.value = null;
+  wordDefinitions.value = [];
 
   // If daily was already played today, switch to random mode
   if (gameMode.value === "daily" && checkDailyPlayed()) {
@@ -317,6 +387,9 @@ async function resetGame(): Promise<void> {
 
   isLoading.value = false;
   syncState();
+
+  // Fetch the word definition asynchronously (don't await - let it load in background)
+  fetchWordDefinition(gameInstance.targetWord);
 }
 
 async function toggleGameMode(): Promise<void> {
