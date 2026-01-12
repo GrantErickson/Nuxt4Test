@@ -17,12 +17,12 @@ export class WordList {
    */
   constructor(targetWordList: string, validGuessesText?: string) {
     this.targetWords = this.parseWordList(targetWordList);
-    
+
     // Build valid words set from both lists
-    const validGuesses = validGuessesText 
+    const validGuesses = validGuessesText
       ? this.parseWordList(validGuessesText)
       : [];
-    
+
     // Combine target words and valid guesses into the valid set
     this.validWordsSet = new Set([...this.targetWords, ...validGuesses]);
   }
