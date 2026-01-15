@@ -77,5 +77,12 @@ const games = [
     icon: "mdi-billiards",
     description: "Physics simulation playground",
   },
+  {
+    name: "Hair Salon",
+    emoji: "✂️",
+    route: "/haircutting",
+    icon: "mdi-content-cut",
+    description: "Physics-based hair cutting and styling game",
+  },
 ];
 </script>
