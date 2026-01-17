@@ -84,5 +84,19 @@ const games = [
     icon: "mdi-content-cut",
     description: "Physics-based hair cutting and styling game",
   },
+  {
+    name: "VoidCatcher 2D",
+    emoji: "🕳️",
+    route: "/voidcatcher2d",
+    icon: "mdi-circle-outline",
+    description: "Catch falling shapes with your void in 2D",
+  },
+  {
+    name: "VoidCatcher 3D",
+    emoji: "⚫",
+    route: "/voidcatcher3d",
+    icon: "mdi-sphere",
+    description: "Physics-based 3D void catcher with powerups",
+  },
 ];
 </script>
