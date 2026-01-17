@@ -65,7 +65,11 @@
         </v-alert>
 
         <!-- Word definition -->
-        <v-card v-if="definitionLoading || wordDefinitions.length > 0" variant="tonal" class="mb-4 text-left">
+        <v-card
+          v-if="definitionLoading || wordDefinitions.length > 0"
+          variant="tonal"
+          class="mb-4 text-left"
+        >
           <v-card-text>
             <div class="d-flex align-center mb-1">
               <strong class="text-h6">{{ targetWord.toUpperCase() }}</strong>
@@ -78,11 +82,20 @@
               />
             </div>
             <div v-if="wordDefinitions.length > 0">
-              <p v-for="(def, index) in wordDefinitions" :key="index" class="text-body-2 mb-1">
+              <p
+                v-for="(def, index) in wordDefinitions"
+                :key="index"
+                class="text-body-2 mb-1"
+              >
                 {{ index + 1 }}. {{ def }}
               </p>
             </div>
-            <p v-else-if="!definitionLoading" class="text-body-2 text-grey mb-0">Definition not available</p>
+            <p
+              v-else-if="!definitionLoading"
+              class="text-body-2 text-grey mb-0"
+            >
+              Definition not available
+            </p>
           </v-card-text>
         </v-card>
 
@@ -312,15 +325,15 @@ async function fetchWordDefinition(word: string): Promise<void> {
     if (response.ok) {
       const data = await response.json();
       const definitions: string[] = [];
-      
+
       // Collect up to 3 definitions from different meanings
       for (const entry of data) {
         for (const meaning of entry.meanings || []) {
           for (const def of meaning.definitions || []) {
             if (def.definition && definitions.length < 3) {
-              const partOfSpeech = meaning.partOfSpeech || '';
+              const partOfSpeech = meaning.partOfSpeech || "";
               definitions.push(
-                partOfSpeech 
+                partOfSpeech
                   ? `(${partOfSpeech}) ${def.definition}`
                   : def.definition
               );
@@ -331,7 +344,7 @@ async function fetchWordDefinition(word: string): Promise<void> {
         }
         if (definitions.length >= 3) break;
       }
-      
+
       wordDefinitions.value = definitions;
     }
   } catch (error) {
