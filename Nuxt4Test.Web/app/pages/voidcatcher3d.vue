@@ -1,9 +1,9 @@
 <template>
-  <v-card class="mx-auto voidcatcher-card">
+  <v-card class="mx-auto voidcatcher3d-card">
     <v-card-title
       class="bg-gradient text-white d-flex align-center justify-space-between flex-wrap ga-2"
     >
-      <span>🌀 Void Catcher</span>
+      <span>🌌 Void Catcher 3D</span>
       <div class="d-flex align-center ga-2 flex-wrap">
         <v-chip color="purple-darken-1" variant="flat" size="small">
           💎 {{ state.score }}
@@ -26,7 +26,7 @@
       <div class="d-flex flex-column align-center">
         <!-- Game canvas -->
         <div ref="canvasContainer" class="canvas-container">
-          <canvas ref="canvasEl" />
+          <canvas ref="canvasEl" width="800" height="600" />
 
           <!-- Game Over Overlay -->
           <div v-if="state.isGameOver" class="game-over-overlay">
@@ -53,17 +53,20 @@
           <!-- Instructions Overlay -->
           <div v-if="showInstructions" class="instructions-overlay">
             <div class="instructions-content">
-              <h2 class="text-h4 mb-4">How to Play</h2>
+              <h2 class="text-h4 mb-4">How to Play - 3D Edition</h2>
               <div class="text-body-1 mb-3">
                 🖱️ <strong>Move your mouse</strong> or <strong>touch</strong> to
                 control the void
               </div>
               <div class="text-body-1 mb-3">
-                🎯 Catch falling shapes by moving the void over them
+                🌀 3D shapes fall from the edges toward the center
               </div>
               <div class="text-body-1 mb-3">
-                ⭐ <strong>Perfect Catch</strong> (50 pts): Catch shapes in
-                mid-air while falling
+                🎯 Catch shapes by positioning the void under them as they fall
+              </div>
+              <div class="text-body-1 mb-3">
+                ⭐ <strong>Perfect Catch</strong> (50 pts): Catch shapes before
+                they touch the ground
               </div>
               <div class="text-body-1 mb-3">
                 💎 <strong>Standard Catch</strong> (10 pts): Catch shapes after
@@ -83,6 +86,26 @@
               >
                 Got it!
               </v-btn>
+            </div>
+          </div>
+
+          <!-- Active Power-ups Display -->
+          <div v-if="activePowerUps.length > 0" class="powerups-overlay">
+            <div
+              v-for="powerUp in activePowerUps"
+              :key="powerUp.type"
+              class="powerup-bar"
+            >
+              <div class="powerup-label">
+                {{ getPowerUpIcon(powerUp.type) }}
+                {{ getPowerUpName(powerUp.type) }}
+              </div>
+              <v-progress-linear
+                :model-value="powerUp.progress * 100"
+                :color="getPowerUpColor(powerUp.type)"
+                height="8"
+                rounded
+              />
             </div>
           </div>
         </div>
@@ -163,17 +186,17 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, reactive } from "vue";
-import { VoidCatcherGame } from "~/classes/voidcatcher";
-import type { VoidCatcherState, GameMode } from "~/classes/voidcatcher";
+import { VoidCatcher3DGame } from "~/classes/voidcatcher3d";
+import type { VoidCatcher3DState, GameMode } from "~/classes/voidcatcher3d";
 
 const canvasEl = ref<HTMLCanvasElement | null>(null);
 const canvasContainer = ref<HTMLElement | null>(null);
 const showInstructions = ref(true);
 const gameMode = ref<GameMode>("endless");
 
-let game: VoidCatcherGame | null = null;
+let game: VoidCatcher3DGame | null = null;
 
-const state = reactive<VoidCatcherState>({
+const state = reactive<VoidCatcher3DState>({
   score: 0,
   highScore: 0,
   isGameOver: false,
@@ -182,7 +205,7 @@ const state = reactive<VoidCatcherState>({
   shapeCount: 0,
   perfectCatchStreak: 0,
   multiplier: 1,
-  voidRadius: 40,
+  voidRadius: 5,
   timeRemaining: undefined,
 });
 
@@ -190,7 +213,46 @@ const updateState = () => {
   if (game) {
     const newState = game.getState();
     Object.assign(state, newState);
+    // Update active powerups
+    activePowerUps.value = game.getActivePowerUps();
   }
+};
+
+// Active powerups tracking
+const activePowerUps = ref<{ type: string; progress: number }[]>([]);
+
+const getPowerUpIcon = (type: string): string => {
+  const icons: Record<string, string> = {
+    grow: "⬆️",
+    shrink: "⬇️",
+    slow: "🐢",
+    fast: "🐇",
+    magnet: "🧲",
+  };
+  return icons[type] || "✨";
+};
+
+const getPowerUpName = (type: string): string => {
+  const names: Record<string, string> = {
+    grow: "Big Void",
+    shrink: "Small Void",
+    slow: "Slow Spawn",
+    fast: "Fast Spawn",
+    magnet: "Magnet",
+  };
+  return names[type] || type;
+};
+
+const getPowerUpColor = (type: string): string => {
+  // Positive powerups get inviting colors, negative get red/warning colors
+  const colors: Record<string, string> = {
+    grow: "green", // positive
+    shrink: "red", // negative
+    slow: "blue", // positive
+    fast: "red-darken-2", // negative
+    magnet: "cyan", // positive
+  };
+  return colors[type] || "purple";
 };
 
 const handleTogglePause = () => {
@@ -214,10 +276,9 @@ const handleModeChange = (newMode: GameMode) => {
 const initGame = (mode: GameMode = "endless") => {
   if (!canvasEl.value || !canvasContainer.value) return;
 
-  game = new VoidCatcherGame({
-    canvasWidth: 600,
-    canvasHeight: 700,
-    voidRadius: 40,
+  game = new VoidCatcher3DGame({
+    playAreaSize: 50,
+    voidRadius: 5,
     initialSpawnRate: 1000,
     gameMode: mode,
     timedModeDuration: 120,
@@ -241,8 +302,8 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.voidcatcher-card {
-  max-width: 700px;
+.voidcatcher3d-card {
+  max-width: 900px;
 }
 
 .bg-gradient {
@@ -290,7 +351,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(15, 15, 35, 0.95);
+  background: rgba(10, 10, 26, 0.95);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -303,6 +364,31 @@ onUnmounted(() => {
   text-align: center;
   color: white;
   max-width: 500px;
+}
+
+.powerups-overlay {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 5;
+  min-width: 150px;
+}
+
+.powerup-bar {
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 8px;
+  padding: 8px 12px;
+  backdrop-filter: blur(4px);
+}
+
+.powerup-label {
+  font-size: 12px;
+  color: white;
+  margin-bottom: 4px;
+  font-weight: 500;
 }
 
 .text-orange {

@@ -11,7 +11,8 @@
           <v-tab value="thermalhunt" to="/thermalhunt">🌡️ Thermal Hunt</v-tab>
           <v-tab value="cavern" to="/cavern">🏔️ Cavern</v-tab>
           <v-tab value="physics" to="/physics">🎱 Physics</v-tab>
-          <v-tab value="voidcatcher" to="/voidcatcher">🌀 Void Catcher</v-tab>
+          <v-tab value="voidcatcher2d" to="/voidcatcher2d">🌀 Void 2D</v-tab>
+          <v-tab value="voidcatcher3d" to="/voidcatcher3d">🌌 Void 3D</v-tab>
         </v-tabs>
         <NuxtPage />
       </v-container>
